@@ -5,7 +5,6 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import logoAsset from "@/assets/hps-logo.jpg.asset.json";
 import "@/lib/i18n";
 
 const searchSchema = z.object({ mode: z.enum(["signin", "signup", "forgot"]).optional() });
@@ -72,7 +71,7 @@ function AuthPage() {
     <div className="min-h-screen brand-gradient flex flex-col">
       <header className="max-w-5xl mx-auto w-full px-6 py-5 flex items-center justify-between text-white">
         <Link to="/" className="flex items-center gap-3">
-          <img src={logoAsset.url} alt="crest" className="h-10 w-10 rounded bg-white p-1" />
+          <img src="/hps-logo.jpg" alt="crest" className="h-10 w-10 rounded bg-white p-1" />
           <span className="font-semibold">{t("app.name")}</span>
         </Link>
         <LanguageSwitcher />

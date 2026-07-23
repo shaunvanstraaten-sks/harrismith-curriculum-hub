@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import logoAsset from "@/assets/hps-logo.jpg.asset.json";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import "@/lib/i18n";
 
@@ -41,7 +40,7 @@ function LandingPage() {
       <header className="max-w-6xl mx-auto w-full px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img
-            src={logoAsset.url}
+            src="/hps-logo.jpg"
             alt="Harrismith Primary crest"
             className="h-11 w-11 rounded bg-white p-1"
           />
@@ -89,7 +88,7 @@ function LandingPage() {
         </div>
         <div className="hidden md:flex justify-center">
           <img
-            src={logoAsset.url}
+            src="/hps-logo.jpg"
             alt="School crest"
             className="w-80 h-80 rounded-2xl bg-white p-6 shadow-2xl"
           />
