@@ -9,21 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedModerationIndexRouteImport } from './routes/_authenticated/moderation.index'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedModerationIndexRouteImport } from './routes/_authenticated/moderation.index'
 import { Route as AuthenticatedModerationTypeIndexRouteImport } from './routes/_authenticated/moderation.$type.index'
-import { Route as AuthenticatedModerationViewIdRouteImport } from './routes/_authenticated/moderation.view.$id'
 import { Route as AuthenticatedModerationTypeNewRouteImport } from './routes/_authenticated/moderation.$type.new'
+import { Route as AuthenticatedModerationViewIdRouteImport } from './routes/_authenticated/moderation.view.$id'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -31,23 +35,24 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedModerationIndexRoute =
@@ -56,27 +61,22 @@ const AuthenticatedModerationIndexRoute =
     path: '/moderation/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
-  id: '/admin/users',
-  path: '/admin/users',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedModerationTypeIndexRoute =
   AuthenticatedModerationTypeIndexRouteImport.update({
     id: '/moderation/$type/',
     path: '/moderation/$type/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedModerationViewIdRoute =
-  AuthenticatedModerationViewIdRouteImport.update({
-    id: '/moderation/view/$id',
-    path: '/moderation/view/$id',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedModerationTypeNewRoute =
   AuthenticatedModerationTypeNewRouteImport.update({
     id: '/moderation/$type/new',
     path: '/moderation/$type/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedModerationViewIdRoute =
+  AuthenticatedModerationViewIdRouteImport.update({
+    id: '/moderation/view/$id',
+    path: '/moderation/view/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -167,18 +167,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -188,19 +181,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/reports': {
-      id: '/_authenticated/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AuthenticatedReportsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -209,11 +202,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/moderation/': {
-      id: '/_authenticated/moderation/'
-      path: '/moderation'
-      fullPath: '/moderation/'
-      preLoaderRoute: typeof AuthenticatedModerationIndexRouteImport
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/users': {
@@ -223,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/moderation/': {
+      id: '/_authenticated/moderation/'
+      path: '/moderation'
+      fullPath: '/moderation/'
+      preLoaderRoute: typeof AuthenticatedModerationIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/moderation/$type/': {
       id: '/_authenticated/moderation/$type/'
       path: '/moderation/$type'
@@ -230,18 +230,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedModerationTypeIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/moderation/view/$id': {
-      id: '/_authenticated/moderation/view/$id'
-      path: '/moderation/view/$id'
-      fullPath: '/moderation/view/$id'
-      preLoaderRoute: typeof AuthenticatedModerationViewIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/moderation/$type/new': {
       id: '/_authenticated/moderation/$type/new'
       path: '/moderation/$type/new'
       fullPath: '/moderation/$type/new'
       preLoaderRoute: typeof AuthenticatedModerationTypeNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/moderation/view/$id': {
+      id: '/_authenticated/moderation/view/$id'
+      path: '/moderation/view/$id'
+      fullPath: '/moderation/view/$id'
+      preLoaderRoute: typeof AuthenticatedModerationViewIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }

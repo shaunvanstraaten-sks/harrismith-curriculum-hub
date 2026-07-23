@@ -15,7 +15,10 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — Harrismith Primary Portal" },
-      { name: "description", content: "Sign in or register for the Harrismith Primary Curriculum & Moderation Portal." },
+      {
+        name: "description",
+        content: "Sign in or register for the Harrismith Primary Curriculum & Moderation Portal.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -91,13 +94,35 @@ function AuthPage() {
           <form onSubmit={submit} className="mt-6 space-y-4">
             {mode === "signup" && (
               <>
-                <Field label={t("auth.fullName")} value={fullName} onChange={setFullName} required />
-                <Field label={t("auth.username")} value={username} onChange={setUsername} required />
+                <Field
+                  label={t("auth.fullName")}
+                  value={fullName}
+                  onChange={setFullName}
+                  required
+                />
+                <Field
+                  label={t("auth.username")}
+                  value={username}
+                  onChange={setUsername}
+                  required
+                />
               </>
             )}
-            <Field label={t("auth.email")} type="email" value={email} onChange={setEmail} required />
+            <Field
+              label={t("auth.email")}
+              type="email"
+              value={email}
+              onChange={setEmail}
+              required
+            />
             {mode !== "forgot" && (
-              <Field label={t("auth.password")} type="password" value={password} onChange={setPassword} required />
+              <Field
+                label={t("auth.password")}
+                type="password"
+                value={password}
+                onChange={setPassword}
+                required
+              />
             )}
 
             <button
@@ -116,12 +141,18 @@ function AuthPage() {
           <div className="mt-5 flex flex-col gap-2 text-sm text-muted-foreground">
             {mode === "signin" ? (
               <>
-                <button className="text-primary hover:underline text-left" onClick={() => setMode("forgot")}>
+                <button
+                  className="text-primary hover:underline text-left"
+                  onClick={() => setMode("forgot")}
+                >
                   {t("auth.forgotPassword")}
                 </button>
                 <div>
                   {t("auth.noAccount")}{" "}
-                  <button className="text-primary hover:underline font-medium" onClick={() => setMode("signup")}>
+                  <button
+                    className="text-primary hover:underline font-medium"
+                    onClick={() => setMode("signup")}
+                  >
                     {t("auth.signUp")}
                   </button>
                 </div>
@@ -129,7 +160,10 @@ function AuthPage() {
             ) : (
               <div>
                 {t("auth.haveAccount")}{" "}
-                <button className="text-primary hover:underline font-medium" onClick={() => setMode("signin")}>
+                <button
+                  className="text-primary hover:underline font-medium"
+                  onClick={() => setMode("signin")}
+                >
                   {t("auth.signIn")}
                 </button>
               </div>

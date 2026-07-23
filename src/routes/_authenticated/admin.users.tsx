@@ -25,7 +25,10 @@ function AdminUsers() {
     enabled: isAdmin,
     queryFn: async () => {
       const [{ data: profiles }, { data: userRoles }] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, username, email, is_approved").order("full_name"),
+        supabase
+          .from("profiles")
+          .select("id, full_name, username, email, is_approved")
+          .order("full_name"),
         supabase.from("user_roles").select("user_id, role"),
       ]);
       const rolesByUser: Record<string, AppRole[]> = {};
@@ -39,7 +42,10 @@ function AdminUsers() {
   if (!isAdmin) return <div className="text-muted-foreground">Access denied.</div>;
 
   const toggleApproved = async (id: string, current: boolean) => {
-    const { error } = await supabase.from("profiles").update({ is_approved: !current }).eq("id", id);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ is_approved: !current })
+      .eq("id", id);
     if (error) toast.error(error.message);
     else {
       toast.success(current ? "Revoked" : t("common.approved"));

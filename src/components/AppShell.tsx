@@ -64,9 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <div className="hidden sm:block text-sm text-white/80">
-              {fullName || user?.email}
-            </div>
+            <div className="hidden sm:block text-sm text-white/80">{fullName || user?.email}</div>
             <button
               onClick={signOut}
               className="inline-flex items-center gap-1.5 rounded-md bg-white/10 hover:bg-white/20 px-3 py-1.5 text-sm"

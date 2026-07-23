@@ -12,9 +12,27 @@ export const Route = createFileRoute("/_authenticated/moderation/")({
 function ModerationHome() {
   const { t } = useTranslation();
   const cards = [
-    { to: "/moderation/pre", title: t("dashboard.preModeration"), desc: t("dashboard.preModerationDesc"), icon: <ClipboardList size={28} />, color: "bg-brand-navy text-white" },
-    { to: "/moderation/post", title: t("dashboard.postModeration"), desc: t("dashboard.postModerationDesc"), icon: <ClipboardCheck size={28} />, color: "bg-brand-green text-white" },
-    { to: "/moderation/book", title: t("dashboard.bookControl"), desc: t("dashboard.bookControlDesc"), icon: <BookOpen size={28} />, color: "bg-brand-orange text-white" },
+    {
+      to: "/moderation/pre",
+      title: t("dashboard.preModeration"),
+      desc: t("dashboard.preModerationDesc"),
+      icon: <ClipboardList size={28} />,
+      color: "bg-brand-navy text-white",
+    },
+    {
+      to: "/moderation/post",
+      title: t("dashboard.postModeration"),
+      desc: t("dashboard.postModerationDesc"),
+      icon: <ClipboardCheck size={28} />,
+      color: "bg-brand-green text-white",
+    },
+    {
+      to: "/moderation/book",
+      title: t("dashboard.bookControl"),
+      desc: t("dashboard.bookControlDesc"),
+      icon: <BookOpen size={28} />,
+      color: "bg-brand-orange text-white",
+    },
   ];
   return (
     <div className="space-y-6">
