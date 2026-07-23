@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 
 export interface PdfSubmission {
+  mode?: "scored" | "checklist";
   title: string;
   teacherName: string;
   grade: string;
@@ -11,7 +12,9 @@ export interface PdfSubmission {
   weeks: string;
   date: string;
   headOfSubject: string;
+  extraMeta?: Array<[string, string]>;
   scores: Array<{ label: string; score: number; max: number; comment: string }>;
+  checklistSections?: Array<{ title: string; items: Array<{ label: string; answer: string }> }>;
   totalScore: number;
   maxScore: number;
   percentage: number;
@@ -60,14 +63,18 @@ export async function generateModerationPdf(s: PdfSubmission) {
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
+  const isChecklist = s.mode === "checklist";
   const meta: Array<[string, string]> = [
-    ["Teacher", s.teacherName],
+    [isChecklist ? "Teacher (Examiner)" : "Teacher", s.teacherName],
     ["Grade", s.grade],
     ["Subject", s.subject],
     ["Academic Year", String(s.academicYear)],
-    ["Quarter / Cycle / Weeks", `Q${s.quarter} · C${s.cycle} · ${s.weeks}`],
+    isChecklist
+      ? ["Term", String(s.quarter)]
+      : ["Quarter / Cycle / Weeks", `Q${s.quarter} · C${s.cycle} · ${s.weeks}`],
     ["Date", s.date],
-    ["Head of Subject", s.headOfSubject],
+    [isChecklist ? "Moderator" : "Head of Subject", s.headOfSubject],
+    ...(s.extraMeta ?? []),
   ];
   meta.forEach(([k, v]) => {
     doc.setFont("helvetica", "bold");
@@ -78,45 +85,72 @@ export async function generateModerationPdf(s: PdfSubmission) {
   });
 
   y += 10;
-  doc.setFont("helvetica", "bold");
-  doc.text("Scores", 40, y);
-  y += 10;
-  doc.line(40, y, W - 40, y);
-  y += 14;
 
-  doc.setFontSize(10);
-  s.scores.forEach((sc) => {
-    if (y > 740) {
-      doc.addPage();
-      y = 40;
-    }
+  if (isChecklist) {
+    (s.checklistSections ?? []).forEach((sec) => {
+      if (y > 740) {
+        doc.addPage();
+        y = 40;
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(sec.title, 40, y);
+      y += 6;
+      doc.setDrawColor(220);
+      doc.line(40, y, W - 40, y);
+      y += 14;
+      doc.setFontSize(10);
+      sec.items.forEach((it) => {
+        if (y > 760) {
+          doc.addPage();
+          y = 40;
+        }
+        doc.setFont("helvetica", "normal");
+        const lines = doc.splitTextToSize(it.label, W - 130);
+        doc.text(lines, 40, y);
+        doc.setFont("helvetica", "bold");
+        doc.text(it.answer, W - 40, y, { align: "right" });
+        y += Math.max(lines.length * 12, 12) + 4;
+      });
+      y += 8;
+    });
+  } else {
     doc.setFont("helvetica", "bold");
-    doc.text(sc.label, 40, y);
-    doc.text(`${sc.score} / ${sc.max}`, W - 40, y, { align: "right" });
-    y += 12;
-    if (sc.comment) {
-      doc.setFont("helvetica", "normal");
-      const lines = doc.splitTextToSize(sc.comment, W - 80);
-      doc.text(lines, 40, y);
-      y += lines.length * 12;
-    }
-    y += 6;
-  });
+    doc.text("Scores", 40, y);
+    y += 10;
+    doc.line(40, y, W - 40, y);
+    y += 14;
 
-  y += 8;
-  doc.line(40, y, W - 40, y);
-  y += 14;
-  doc.setFont("helvetica", "bold");
-  doc.text(
-    `Total: ${s.totalScore} / ${s.maxScore}    Percentage: ${s.percentage.toFixed(1)}%`,
-    40,
-    y,
-  );
-  y += 20;
+    doc.setFontSize(10);
+    s.scores.forEach((sc) => {
+      if (y > 740) {
+        doc.addPage();
+        y = 40;
+      }
+      doc.setFont("helvetica", "bold");
+      doc.text(sc.label, 40, y);
+      doc.text(`${sc.score} / ${sc.max}`, W - 40, y, { align: "right" });
+      y += 12;
+      if (sc.comment) {
+        doc.setFont("helvetica", "normal");
+        const lines = doc.splitTextToSize(sc.comment, W - 80);
+        doc.text(lines, 40, y);
+        y += lines.length * 12;
+      }
+      y += 6;
+    });
+
+    y += 8;
+    doc.line(40, y, W - 40, y);
+    y += 14;
+    doc.setFont("helvetica", "bold");
+    doc.text(`Total: ${s.totalScore} / ${s.maxScore}    Percentage: ${s.percentage.toFixed(1)}%`, 40, y);
+    y += 20;
+  }
 
   if (s.generalComments) {
     doc.setFont("helvetica", "bold");
-    doc.text("General Comments", 40, y);
+    doc.text(isChecklist ? "Comments" : "General Comments", 40, y);
     y += 14;
     doc.setFont("helvetica", "normal");
     const lines = doc.splitTextToSize(s.generalComments, W - 80);

@@ -5,7 +5,13 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { itemsFor } from "@/lib/moderation-templates";
+import {
+  templateFor,
+  checklistItemsFlat,
+  answerToScore,
+  type ChecklistAnswer,
+  type MetaField,
+} from "@/lib/moderation-templates";
 import type { Database } from "@/integrations/supabase/types";
 
 type ModType = Database["public"]["Enums"]["moderation_type"];
@@ -29,7 +35,9 @@ function NewModeration() {
   const cfg = TYPE_MAP[type];
   const navigate = useNavigate();
   const { user } = useAuth();
-  const items = useMemo(() => (cfg ? itemsFor(cfg.db) : []), [cfg]);
+  const tpl = useMemo(() => (cfg ? templateFor(cfg.db) : null), [cfg]);
+  const scoredItems = tpl?.mode === "scored" ? tpl.items : [];
+  const checklist = tpl?.mode === "checklist" ? checklistItemsFlat(tpl) : [];
 
   const [state, setState] = useState({
     academic_year: new Date().getFullYear(),
@@ -40,13 +48,16 @@ function NewModeration() {
     teacher_id: "",
     subject_id: "",
     grade_id: "",
+    type_of_moderation: "",
+    type_of_assessment: "",
     general_comments: "",
     recommendations: "",
   });
 
   const [scores, setScores] = useState<Record<string, { score: number; comment: string }>>(
-    () => Object.fromEntries(items.map((i) => [i.key, { score: 0, comment: "" }])),
+    () => Object.fromEntries(scoredItems.map((i) => [i.key, { score: 0, comment: "" }])),
   );
+  const [answers, setAnswers] = useState<Record<string, ChecklistAnswer>>({});
 
   const { data: grades } = useQuery({
     queryKey: ["grades"],
@@ -64,36 +75,74 @@ function NewModeration() {
     },
   });
 
-  const totalMax = items.reduce((a, b) => a + b.maxScore, 0);
-  const total = items.reduce((a, b) => a + (scores[b.key]?.score ?? 0), 0);
+  const totalMax = scoredItems.reduce((a, b) => a + b.maxScore, 0);
+  const total = scoredItems.reduce((a, b) => a + (scores[b.key]?.score ?? 0), 0);
   const percentage = totalMax ? (total / totalMax) * 100 : 0;
 
   const save = async (submit: boolean) => {
-    if (!cfg || !user) return;
+    if (!cfg || !tpl || !user) return;
     if (!state.teacher_id || !state.subject_id || !state.grade_id) {
       toast.error("Please select teacher, subject and grade.");
       return;
     }
+    if (tpl.mode === "checklist" && (!state.type_of_moderation || !state.type_of_assessment)) {
+      toast.error("Please select the type of moderation and type of assessment.");
+      return;
+    }
+
+    // Build the per-item rows + totals (checklist encodes Yes/No/N-A into score/max_score).
+    let rowTotal = 0;
+    let rowMax = 0;
+    const rowTemplates: Array<{ item_key: string; item_label: string; score: number; max_score: number; comment: string }> = [];
+
+    if (tpl.mode === "scored") {
+      scoredItems.forEach((it) => {
+        const sc = scores[it.key]?.score ?? 0;
+        rowTotal += sc;
+        rowMax += it.maxScore;
+        rowTemplates.push({ item_key: it.key, item_label: t(it.labelKey), score: sc, max_score: it.maxScore, comment: scores[it.key]?.comment ?? "" });
+      });
+    } else {
+      if (submit) {
+        const unanswered = checklist.filter((it) => !answers[it.key]);
+        if (unanswered.length) {
+          toast.error(`Please answer all ${checklist.length} checklist items (${unanswered.length} remaining).`);
+          return;
+        }
+      }
+      checklist.forEach((it) => {
+        const { score, max } = answerToScore(answers[it.key] ?? "na");
+        rowTotal += score;
+        rowMax += max;
+        rowTemplates.push({ item_key: it.key, item_label: t(it.labelKey), score, max_score: max, comment: "" });
+      });
+    }
+
+    const pct = rowMax ? (rowTotal / rowMax) * 100 : 0;
+
     const payload = {
       moderation_type: cfg.db,
       academic_year: Number(state.academic_year),
       quarter: Number(state.quarter),
-      cycle: Number(state.cycle),
-      weeks: state.weeks,
+      cycle: tpl.metaFields.includes("cycle") ? Number(state.cycle) : 1,
+      weeks: tpl.metaFields.includes("weeks") ? state.weeks : "-",
       moderation_date: state.moderation_date,
       teacher_id: state.teacher_id,
       head_of_subject_id: user.id,
       subject_id: state.subject_id,
       grade_id: state.grade_id,
-      total_score: total,
-      max_score: totalMax,
-      percentage,
+      type_of_moderation: state.type_of_moderation || null,
+      type_of_assessment: state.type_of_assessment || null,
+      total_score: rowTotal,
+      max_score: rowMax,
+      percentage: pct,
       status: submit ? ("submitted" as const) : ("draft" as const),
       general_comments: state.general_comments || null,
       recommendations: state.recommendations || null,
       submitted_at: submit ? new Date().toISOString() : null,
       created_by: user.id,
     };
+
     const { data: sub, error } = await supabase
       .from("moderation_submissions")
       .insert(payload)
@@ -103,15 +152,7 @@ function NewModeration() {
       toast.error(error.message);
       return;
     }
-    const rows = items.map((it, idx) => ({
-      submission_id: sub.id,
-      item_key: it.key,
-      item_label: t(it.labelKey),
-      score: scores[it.key]?.score ?? 0,
-      max_score: it.maxScore,
-      comment: scores[it.key]?.comment ?? "",
-      sort_order: idx,
-    }));
+    const rows = rowTemplates.map((r, idx) => ({ ...r, submission_id: sub.id, sort_order: idx }));
     const { error: sErr } = await supabase.from("moderation_scores").insert(rows);
     if (sErr) {
       toast.error(sErr.message);
@@ -121,7 +162,36 @@ function NewModeration() {
     navigate({ to: "/moderation/view/$id", params: { id: sub.id } });
   };
 
-  if (!cfg) return <div>Unknown type</div>;
+  if (!cfg || !tpl) return <div>Unknown type</div>;
+
+  const renderMeta = (field: MetaField) => {
+    switch (field) {
+      case "academic_year":
+        return <NumberField key={field} label={t("moderation.academicYear")} value={state.academic_year} onChange={(v) => setState({ ...state, academic_year: v })} />;
+      case "quarter":
+        return <SelectField key={field} label={t("moderation.quarter")} value={String(state.quarter)} options={["1", "2", "3", "4"]} onChange={(v) => setState({ ...state, quarter: Number(v) })} />;
+      case "term":
+        return <SelectField key={field} label={t("moderation.term")} value={String(state.quarter)} options={["1", "2", "3", "4"]} onChange={(v) => setState({ ...state, quarter: Number(v) })} />;
+      case "cycle":
+        return <SelectField key={field} label={t("moderation.cycle")} value={String(state.cycle)} options={["1", "2", "3", "4"]} onChange={(v) => setState({ ...state, cycle: Number(v) })} />;
+      case "weeks":
+        return <TextField key={field} label={t("moderation.weeks")} value={state.weeks} onChange={(v) => setState({ ...state, weeks: v })} />;
+      case "moderation_date":
+        return <DateField key={field} label={t("moderation.date")} value={state.moderation_date} onChange={(v) => setState({ ...state, moderation_date: v })} />;
+      case "grade":
+        return <SelectField key={field} label={t("moderation.grade")} value={state.grade_id} options={(grades ?? []).map((g) => ({ value: g.id, label: g.name }))} onChange={(v) => setState({ ...state, grade_id: v })} />;
+      case "subject":
+        return <SelectField key={field} label={t("moderation.subject")} value={state.subject_id} options={(subjects ?? []).map((s) => ({ value: s.id, label: s.name }))} onChange={(v) => setState({ ...state, subject_id: v })} />;
+      case "teacher":
+        return <SelectField key={field} label={tpl.mode === "checklist" ? t("moderation.examiner") : t("moderation.teacher")} value={state.teacher_id} options={(teachers ?? []).map((tp) => ({ value: tp.id, label: tp.full_name || tp.email || "—" }))} onChange={(v) => setState({ ...state, teacher_id: v })} />;
+      case "type_of_moderation":
+        return <SelectField key={field} label={t("moderation.typeOfModeration")} value={state.type_of_moderation} options={[{ value: "school", label: t("opts.school") }, { value: "department", label: t("opts.department") }]} onChange={(v) => setState({ ...state, type_of_moderation: v })} />;
+      case "type_of_assessment":
+        return <SelectField key={field} label={t("moderation.typeOfAssessment")} value={state.type_of_assessment} options={[{ value: "test", label: t("opts.test") }, { value: "exam", label: t("opts.exam") }, { value: "assignment", label: t("opts.assignment") }]} onChange={(v) => setState({ ...state, type_of_assessment: v })} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -131,98 +201,94 @@ function NewModeration() {
       </div>
 
       <section className="card-elevated p-6 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-        <NumberField label={t("moderation.academicYear")} value={state.academic_year} onChange={(v) => setState({ ...state, academic_year: v })} />
-        <SelectField label={t("moderation.quarter")} value={String(state.quarter)} options={["1", "2", "3", "4"]} onChange={(v) => setState({ ...state, quarter: Number(v) })} />
-        <SelectField label={t("moderation.cycle")} value={String(state.cycle)} options={["1", "2", "3", "4"]} onChange={(v) => setState({ ...state, cycle: Number(v) })} />
-        <TextField label={t("moderation.weeks")} value={state.weeks} onChange={(v) => setState({ ...state, weeks: v })} />
-        <DateField label={t("moderation.date")} value={state.moderation_date} onChange={(v) => setState({ ...state, moderation_date: v })} />
-        <SelectField
-          label={t("moderation.grade")}
-          value={state.grade_id}
-          options={(grades ?? []).map((g) => ({ value: g.id, label: g.name }))}
-          onChange={(v) => setState({ ...state, grade_id: v })}
-        />
-        <SelectField
-          label={t("moderation.subject")}
-          value={state.subject_id}
-          options={(subjects ?? []).map((s) => ({ value: s.id, label: s.name }))}
-          onChange={(v) => setState({ ...state, subject_id: v })}
-        />
-        <SelectField
-          label={t("moderation.teacher")}
-          value={state.teacher_id}
-          options={(teachers ?? []).map((tp) => ({ value: tp.id, label: tp.full_name || tp.email || "—" }))}
-          onChange={(v) => setState({ ...state, teacher_id: v })}
-        />
+        {tpl.metaFields.map((f) => renderMeta(f))}
       </section>
 
-      <section className="card-elevated p-6 space-y-4">
-        <h2 className="font-semibold text-lg">Moderation checklist</h2>
-        {items.map((it) => (
-          <div key={it.key} className="grid gap-2 md:grid-cols-[1fr_120px] items-start border-b border-border pb-3 last:border-b-0">
-            <div>
-              <div className="font-medium">{t(it.labelKey)}</div>
-              <textarea
-                placeholder={t("moderation.comment")}
-                value={scores[it.key]?.comment ?? ""}
-                onChange={(e) =>
-                  setScores({ ...scores, [it.key]: { ...scores[it.key], comment: e.target.value } })
-                }
-                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[60px]"
-              />
+      {tpl.mode === "scored" ? (
+        <section className="card-elevated p-6 space-y-4">
+          <h2 className="font-semibold text-lg">{t("moderation.new")}</h2>
+          {scoredItems.map((it) => (
+            <div key={it.key} className="grid gap-2 md:grid-cols-[1fr_120px] items-start border-b border-border pb-3 last:border-b-0">
+              <div>
+                <div className="font-medium">{t(it.labelKey)}</div>
+                <textarea
+                  placeholder={t("moderation.comment")}
+                  value={scores[it.key]?.comment ?? ""}
+                  onChange={(e) => setScores({ ...scores, [it.key]: { ...scores[it.key], comment: e.target.value } })}
+                  className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[60px]"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">{t("moderation.score")} (/{it.maxScore})</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={it.maxScore}
+                  step={0.5}
+                  value={scores[it.key]?.score ?? 0}
+                  onChange={(e) => setScores({ ...scores, [it.key]: { ...scores[it.key], score: Math.min(it.maxScore, Math.max(0, Number(e.target.value))) } })}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground">
-                {t("moderation.score")} (/{it.maxScore})
-              </label>
-              <input
-                type="number"
-                min={0}
-                max={it.maxScore}
-                step={0.5}
-                value={scores[it.key]?.score ?? 0}
-                onChange={(e) =>
-                  setScores({
-                    ...scores,
-                    [it.key]: {
-                      ...scores[it.key],
-                      score: Math.min(it.maxScore, Math.max(0, Number(e.target.value))),
-                    },
-                  })
-                }
-                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
+          ))}
+        </section>
+      ) : (
+        <section className="card-elevated p-6 space-y-6">
+          <h2 className="font-semibold text-lg">{t("moderation.checklist")}</h2>
+          {tpl.sections.map((sec) => (
+            <div key={sec.key} className="space-y-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">{t(sec.titleKey)}</h3>
+              {sec.items.map((it) => (
+                <div key={it.key} className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3 last:border-b-0">
+                  <div className="flex-1 min-w-[240px] text-sm">{t(it.labelKey)}</div>
+                  <AnswerToggle
+                    value={answers[it.key]}
+                    allowNa={it.allowNa}
+                    onChange={(v) => setAnswers({ ...answers, [it.key]: v })}
+                    labels={{ yes: t("answer.yes"), no: t("answer.no"), na: t("answer.na") }}
+                  />
+                </div>
+              ))}
             </div>
-          </div>
-        ))}
-      </section>
+          ))}
+        </section>
+      )}
 
       <section className="card-elevated p-6 space-y-4">
         <label className="block">
-          <span className="text-sm font-medium">{t("moderation.generalComments")}</span>
+          <span className="text-sm font-medium">{tpl.mode === "checklist" ? t("moderation.comments") : t("moderation.generalComments")}</span>
           <textarea
             value={state.general_comments}
             onChange={(e) => setState({ ...state, general_comments: e.target.value })}
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
           />
         </label>
-        <label className="block">
-          <span className="text-sm font-medium">{t("moderation.recommendations")}</span>
-          <textarea
-            value={state.recommendations}
-            onChange={(e) => setState({ ...state, recommendations: e.target.value })}
-            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
-          />
-        </label>
+        {tpl.mode === "scored" && (
+          <label className="block">
+            <span className="text-sm font-medium">{t("moderation.recommendations")}</span>
+            <textarea
+              value={state.recommendations}
+              onChange={(e) => setState({ ...state, recommendations: e.target.value })}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
+            />
+          </label>
+        )}
       </section>
 
       <div className="card-elevated p-6 flex items-center justify-between">
-        <div className="text-sm">
-          <div className="text-muted-foreground">
-            {t("moderation.total")}: <span className="font-semibold text-foreground">{total} / {totalMax}</span>
+        {tpl.mode === "scored" ? (
+          <div className="text-sm">
+            <div className="text-muted-foreground">
+              {t("moderation.total")}: <span className="font-semibold text-foreground">{total} / {totalMax}</span>
+            </div>
+            <div className="text-2xl font-bold">{percentage.toFixed(1)}%</div>
           </div>
-          <div className="text-2xl font-bold">{percentage.toFixed(1)}%</div>
-        </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">
+            {checklist.filter((it) => answers[it.key]).length} / {checklist.length} answered
+          </div>
+        )}
         <div className="flex gap-2">
           <button onClick={() => save(false)} className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
             {t("moderation.saveDraft")}
@@ -232,6 +298,38 @@ function NewModeration() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function AnswerToggle({
+  value,
+  allowNa,
+  onChange,
+  labels,
+}: {
+  value: ChecklistAnswer | undefined;
+  allowNa?: boolean;
+  onChange: (v: ChecklistAnswer) => void;
+  labels: { yes: string; no: string; na: string };
+}) {
+  const opts: { key: ChecklistAnswer; label: string; active: string }[] = [
+    { key: "yes", label: labels.yes, active: "bg-status-green text-white border-status-green" },
+    { key: "no", label: labels.no, active: "bg-status-red text-white border-status-red" },
+    ...(allowNa ? [{ key: "na" as ChecklistAnswer, label: labels.na, active: "bg-muted-foreground text-white border-muted-foreground" }] : []),
+  ];
+  return (
+    <div className="flex gap-1">
+      {opts.map((o) => (
+        <button
+          key={o.key}
+          type="button"
+          onClick={() => onChange(o.key)}
+          className={`rounded-md border px-3 py-1.5 text-sm font-medium transition ${value === o.key ? o.active : "border-input bg-background hover:bg-accent"}`}
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   );
 }

@@ -3,7 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { generateModerationPdf } from "@/lib/pdf";
+import { templateFor, checklistItemsFlat, scoreToAnswer } from "@/lib/moderation-templates";
+import type { Database } from "@/integrations/supabase/types";
 import { Download } from "lucide-react";
+
+type ModType = Database["public"]["Enums"]["moderation_type"];
 
 export const Route = createFileRoute("/_authenticated/moderation/view/$id")({
   component: ViewModeration,
@@ -38,26 +42,64 @@ function ViewModeration() {
 
   if (isLoading || !data) return <div className="text-muted-foreground">{t("common.loading")}</div>;
   const { sub, scores } = data;
+  const modType = sub.moderation_type as ModType;
+  const tpl = templateFor(modType);
+  const isChecklist = tpl.mode === "checklist";
+  const anyS = sub as any;
+
+  const teacherName = anyS.teacher?.full_name || anyS.teacher?.email || "—";
+  const hosName = anyS.hos?.full_name || anyS.hos?.email || "—";
+  const gradeName = anyS.grades?.name ?? "—";
+  const subjectName = anyS.subjects?.name ?? "—";
+  const answerLabel = (a: "yes" | "no" | "na") => t(`answer.${a}`);
+  const optLabel = (v: string | null) => (v ? t(`opts.${v}`, v) : "—");
+
   const pct = Number(sub.percentage);
   const color = pct >= 85 ? "bg-status-green" : pct >= 70 ? "bg-status-orange" : "bg-status-red";
 
+  // Grouped checklist for view + PDF (from template order + stored score/max).
+  const scoreByKey = Object.fromEntries(scores.map((s) => [s.item_key, s]));
+  const checklistSections = isChecklist
+    ? tpl.sections.map((sec) => ({
+        title: t(sec.titleKey),
+        items: sec.items.map((it) => {
+          const row = scoreByKey[it.key];
+          const ans = row ? scoreToAnswer(Number(row.score), Number(row.max_score)) : "na";
+          return { label: t(it.labelKey), answer: ans };
+        }),
+      }))
+    : [];
+
   const download = () =>
     generateModerationPdf({
-      title: `${sub.moderation_type.replace("_", " ")} — Q${sub.quarter} C${sub.cycle}`,
-      teacherName: (sub as any).teacher?.full_name || (sub as any).teacher?.email || "—",
-      grade: (sub as any).grades?.name || "—",
-      subject: (sub as any).subjects?.name || "—",
+      mode: tpl.mode,
+      title: isChecklist
+        ? `${t("dashboard.preModeration")} — ${t("moderation.term")} ${sub.quarter}`
+        : `${sub.moderation_type.replace("_", " ")} — Q${sub.quarter} C${sub.cycle}`,
+      teacherName,
+      grade: gradeName,
+      subject: subjectName,
       academicYear: sub.academic_year,
       quarter: sub.quarter,
       cycle: sub.cycle,
       weeks: sub.weeks,
       date: sub.moderation_date,
-      headOfSubject: (sub as any).hos?.full_name || (sub as any).hos?.email || "—",
+      headOfSubject: hosName,
+      extraMeta: isChecklist
+        ? [
+            [t("moderation.typeOfModeration"), optLabel(sub.type_of_moderation)],
+            [t("moderation.typeOfAssessment"), optLabel(sub.type_of_assessment)],
+          ]
+        : [],
       scores: scores.map((s) => ({
         label: s.item_label,
         score: Number(s.score),
         max: Number(s.max_score),
         comment: s.comment ?? "",
+      })),
+      checklistSections: checklistSections.map((sec) => ({
+        title: sec.title,
+        items: sec.items.map((i) => ({ label: i.label, answer: answerLabel(i.answer) })),
       })),
       totalScore: Number(sub.total_score),
       maxScore: Number(sub.max_score),
@@ -70,11 +112,9 @@ function ViewModeration() {
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-start justify-between">
         <div>
-          <div className="text-sm text-muted-foreground capitalize">
-            {sub.moderation_type.replace("_", " ")}
-          </div>
+          <div className="text-sm text-muted-foreground capitalize">{sub.moderation_type.replace("_", " ")}</div>
           <h1 className="text-3xl font-bold">
-            Q{sub.quarter} · C{sub.cycle} · {sub.weeks}
+            {isChecklist ? `${t("moderation.term")} ${sub.quarter}` : `Q${sub.quarter} · C${sub.cycle} · ${sub.weeks}`}
           </h1>
           <div className="text-sm text-muted-foreground mt-1">
             {sub.moderation_date} · {sub.academic_year}
@@ -95,51 +135,70 @@ function ViewModeration() {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 text-sm card-elevated p-6">
-        <Meta label={t("moderation.teacher")} value={(sub as any).teacher?.full_name || (sub as any).teacher?.email || "—"} />
-        <Meta label={t("moderation.grade")} value={(sub as any).grades?.name ?? "—"} />
-        <Meta label={t("moderation.subject")} value={(sub as any).subjects?.name ?? "—"} />
-        <Meta label={t("moderation.headOfSubject")} value={(sub as any).hos?.full_name || (sub as any).hos?.email || "—"} />
+        <Meta label={isChecklist ? t("moderation.examiner") : t("moderation.teacher")} value={teacherName} />
+        <Meta label={t("moderation.grade")} value={gradeName} />
+        <Meta label={t("moderation.subject")} value={subjectName} />
+        <Meta label={isChecklist ? t("moderation.moderator") : t("moderation.headOfSubject")} value={hosName} />
+        {isChecklist && <Meta label={t("moderation.typeOfModeration")} value={optLabel(sub.type_of_moderation)} />}
+        {isChecklist && <Meta label={t("moderation.typeOfAssessment")} value={optLabel(sub.type_of_assessment)} />}
         <Meta label={t("moderation.status")} value={sub.status} />
       </div>
 
-      <div className="card-elevated overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="text-left p-3">Item</th>
-              <th className="text-left p-3">{t("moderation.comment")}</th>
-              <th className="text-right p-3">{t("moderation.score")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scores.map((s) => (
-              <tr key={s.id} className="border-t border-border">
-                <td className="p-3 font-medium">{s.item_label}</td>
-                <td className="p-3 text-muted-foreground">{s.comment || "—"}</td>
-                <td className="p-3 text-right font-semibold">
-                  {Number(s.score)} / {Number(s.max_score)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {isChecklist ? (
+        <div className="space-y-4">
+          {checklistSections.map((sec) => (
+            <div key={sec.title} className="card-elevated overflow-hidden">
+              <div className="bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-primary">{sec.title}</div>
+              <table className="w-full text-sm">
+                <tbody>
+                  {sec.items.map((it, i) => (
+                    <tr key={i} className="border-t border-border">
+                      <td className="p-3">{it.label}</td>
+                      <td className="p-3 text-right w-20">
+                        <AnswerBadge answer={it.answer} label={answerLabel(it.answer)} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <>
+          <div className="card-elevated overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="text-left p-3">Item</th>
+                  <th className="text-left p-3">{t("moderation.comment")}</th>
+                  <th className="text-right p-3">{t("moderation.score")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scores.map((s) => (
+                  <tr key={s.id} className="border-t border-border">
+                    <td className="p-3 font-medium">{s.item_label}</td>
+                    <td className="p-3 text-muted-foreground">{s.comment || "—"}</td>
+                    <td className="p-3 text-right font-semibold">{Number(s.score)} / {Number(s.max_score)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-      <div className="card-elevated p-6 flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          {t("moderation.total")}:{" "}
-          <span className="text-foreground font-semibold">
-            {Number(sub.total_score)} / {Number(sub.max_score)}
-          </span>
-        </div>
-        <div className={`rounded-md text-white px-4 py-2 font-bold text-lg ${color}`}>
-          {pct.toFixed(1)}%
-        </div>
-      </div>
+          <div className="card-elevated p-6 flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              {t("moderation.total")}: <span className="text-foreground font-semibold">{Number(sub.total_score)} / {Number(sub.max_score)}</span>
+            </div>
+            <div className={`rounded-md text-white px-4 py-2 font-bold text-lg ${color}`}>{pct.toFixed(1)}%</div>
+          </div>
+        </>
+      )}
 
       {sub.general_comments && (
         <div className="card-elevated p-6">
-          <div className="font-semibold mb-2">{t("moderation.generalComments")}</div>
+          <div className="font-semibold mb-2">{isChecklist ? t("moderation.comments") : t("moderation.generalComments")}</div>
           <p className="text-sm whitespace-pre-wrap text-muted-foreground">{sub.general_comments}</p>
         </div>
       )}
@@ -151,6 +210,16 @@ function ViewModeration() {
       )}
     </div>
   );
+}
+
+function AnswerBadge({ answer, label }: { answer: "yes" | "no" | "na"; label: string }) {
+  const cls =
+    answer === "yes"
+      ? "bg-status-green/15 text-status-green border-status-green/30"
+      : answer === "no"
+        ? "bg-status-red/15 text-status-red border-status-red/30"
+        : "bg-muted text-muted-foreground border-border";
+  return <span className={`inline-block rounded-md border px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>;
 }
 
 function Meta({ label, value }: { label: string; value: string }) {

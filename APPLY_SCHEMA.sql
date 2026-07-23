@@ -260,3 +260,10 @@ ALTER TABLE public.moderation_submissions
 -- ============================================================
 GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_staff(uuid) TO authenticated;
+
+-- ============================================================
+-- FROM: 20260723180000_add_pre_moderation_metadata.sql
+-- ============================================================
+ALTER TABLE public.moderation_submissions
+  ADD COLUMN IF NOT EXISTS type_of_moderation TEXT,
+  ADD COLUMN IF NOT EXISTS type_of_assessment TEXT;

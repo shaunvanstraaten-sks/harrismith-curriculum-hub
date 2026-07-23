@@ -112,6 +112,8 @@ export type Database = {
           submitted_at: string | null
           teacher_id: string
           total_score: number
+          type_of_assessment: string | null
+          type_of_moderation: string | null
           updated_at: string
           weeks: string
         }
@@ -135,6 +137,8 @@ export type Database = {
           submitted_at?: string | null
           teacher_id: string
           total_score?: number
+          type_of_assessment?: string | null
+          type_of_moderation?: string | null
           updated_at?: string
           weeks: string
         }
@@ -158,6 +162,8 @@ export type Database = {
           submitted_at?: string | null
           teacher_id?: string
           total_score?: number
+          type_of_assessment?: string | null
+          type_of_moderation?: string | null
           updated_at?: string
           weeks?: string
         }
