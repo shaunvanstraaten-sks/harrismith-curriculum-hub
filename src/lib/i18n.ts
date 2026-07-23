@@ -233,8 +233,7 @@ const af: typeof en = {
   },
 };
 
-const stored =
-  typeof window !== "undefined" ? window.localStorage.getItem("hps.lang") : null;
+const stored = typeof window !== "undefined" ? window.localStorage.getItem("hps.lang") : null;
 
 if (!i18n.isInitialized) {
   void i18n.use(initReactI18next).init({

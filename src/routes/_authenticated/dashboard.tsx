@@ -3,7 +3,14 @@ import { useTranslation } from "react-i18next";
 import { useAuth, hasAnyRole } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ClipboardList, ClipboardCheck, BookOpen, TrendingUp, Users, AlertCircle } from "lucide-react";
+import {
+  ClipboardList,
+  ClipboardCheck,
+  BookOpen,
+  TrendingUp,
+  Users,
+  AlertCircle,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -51,8 +58,16 @@ function DashboardPage() {
       {/* KPI cards for staff */}
       {isStaff && (
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiCard icon={<ClipboardList size={20} />} label={t("dashboard.latest")} value={String(submitted.length)} />
-          <KpiCard icon={<TrendingUp size={20} />} label={t("dashboard.avgScore")} value={`${avg.toFixed(1)}%`} />
+          <KpiCard
+            icon={<ClipboardList size={20} />}
+            label={t("dashboard.latest")}
+            value={String(submitted.length)}
+          />
+          <KpiCard
+            icon={<TrendingUp size={20} />}
+            label={t("dashboard.avgScore")}
+            value={`${avg.toFixed(1)}%`}
+          />
           <KpiCard icon={<AlertCircle size={20} />} label="Below 85%" value={String(below85)} />
           <KpiCard icon={<Users size={20} />} label={t("dashboard.teachers")} value="—" />
         </section>
@@ -115,10 +130,7 @@ function ModerationCard({
   color: string;
 }) {
   return (
-    <Link
-      to={to}
-      className="card-elevated overflow-hidden group hover:shadow-lg transition-shadow"
-    >
+    <Link to={to} className="card-elevated overflow-hidden group hover:shadow-lg transition-shadow">
       <div className={`${color} p-6 flex items-center gap-4`}>
         <div className="rounded-full bg-white/15 p-3">{icon}</div>
         <div className="text-xl font-semibold">{title}</div>

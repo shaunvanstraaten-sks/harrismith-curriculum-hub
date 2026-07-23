@@ -52,7 +52,11 @@ function ReportsPage() {
                 <td className="p-3">{r.subjects?.name ?? "—"}</td>
                 <td className="p-3">{Number(r.percentage).toFixed(1)}%</td>
                 <td className="p-3 text-right">
-                  <Link to="/moderation/view/$id" params={{ id: r.id }} className="text-primary hover:underline">
+                  <Link
+                    to="/moderation/view/$id"
+                    params={{ id: r.id }}
+                    className="text-primary hover:underline"
+                  >
                     {t("common.view")}
                   </Link>
                 </td>

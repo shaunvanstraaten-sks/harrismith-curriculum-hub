@@ -95,10 +95,16 @@ function ViewModeration() {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 text-sm card-elevated p-6">
-        <Meta label={t("moderation.teacher")} value={(sub as any).teacher?.full_name || (sub as any).teacher?.email || "—"} />
+        <Meta
+          label={t("moderation.teacher")}
+          value={(sub as any).teacher?.full_name || (sub as any).teacher?.email || "—"}
+        />
         <Meta label={t("moderation.grade")} value={(sub as any).grades?.name ?? "—"} />
         <Meta label={t("moderation.subject")} value={(sub as any).subjects?.name ?? "—"} />
-        <Meta label={t("moderation.headOfSubject")} value={(sub as any).hos?.full_name || (sub as any).hos?.email || "—"} />
+        <Meta
+          label={t("moderation.headOfSubject")}
+          value={(sub as any).hos?.full_name || (sub as any).hos?.email || "—"}
+        />
         <Meta label={t("moderation.status")} value={sub.status} />
       </div>
 
@@ -140,7 +146,9 @@ function ViewModeration() {
       {sub.general_comments && (
         <div className="card-elevated p-6">
           <div className="font-semibold mb-2">{t("moderation.generalComments")}</div>
-          <p className="text-sm whitespace-pre-wrap text-muted-foreground">{sub.general_comments}</p>
+          <p className="text-sm whitespace-pre-wrap text-muted-foreground">
+            {sub.general_comments}
+          </p>
         </div>
       )}
       {sub.recommendations && (

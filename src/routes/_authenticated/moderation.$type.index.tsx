@@ -77,7 +77,9 @@ function TypeList() {
                 <th className="p-3">{t("moderation.teacher")}</th>
                 <th className="p-3">{t("moderation.grade")}</th>
                 <th className="p-3">{t("moderation.subject")}</th>
-                <th className="p-3">{t("moderation.quarter")}/{t("moderation.cycle")}</th>
+                <th className="p-3">
+                  {t("moderation.quarter")}/{t("moderation.cycle")}
+                </th>
                 <th className="p-3">{t("moderation.percentage")}</th>
                 <th className="p-3">{t("moderation.status")}</th>
                 <th className="p-3"></th>
@@ -94,9 +96,13 @@ function TypeList() {
                     <td className="p-3">{r.teacher?.full_name || r.teacher?.email || "—"}</td>
                     <td className="p-3">{r.grades?.name ?? "—"}</td>
                     <td className="p-3">{r.subjects?.name ?? "—"}</td>
-                    <td className="p-3">Q{r.quarter} · C{r.cycle}</td>
                     <td className="p-3">
-                      <span className={`inline-block rounded px-2 py-0.5 text-white text-xs ${color}`}>
+                      Q{r.quarter} · C{r.cycle}
+                    </td>
+                    <td className="p-3">
+                      <span
+                        className={`inline-block rounded px-2 py-0.5 text-white text-xs ${color}`}
+                      >
                         {pct.toFixed(1)}%
                       </span>
                     </td>

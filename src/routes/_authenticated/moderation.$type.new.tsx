@@ -19,7 +19,10 @@ const TYPE_MAP: Record<string, { db: ModType; labelKey: string }> = {
 export const Route = createFileRoute("/_authenticated/moderation/$type/new")({
   component: NewModeration,
   head: () => ({
-    meta: [{ title: "New moderation — Harrismith Primary" }, { name: "robots", content: "noindex" }],
+    meta: [
+      { title: "New moderation — Harrismith Primary" },
+      { name: "robots", content: "noindex" },
+    ],
   }),
 });
 
@@ -44,22 +47,27 @@ function NewModeration() {
     recommendations: "",
   });
 
-  const [scores, setScores] = useState<Record<string, { score: number; comment: string }>>(
-    () => Object.fromEntries(items.map((i) => [i.key, { score: 0, comment: "" }])),
+  const [scores, setScores] = useState<Record<string, { score: number; comment: string }>>(() =>
+    Object.fromEntries(items.map((i) => [i.key, { score: 0, comment: "" }])),
   );
 
   const { data: grades } = useQuery({
     queryKey: ["grades"],
-    queryFn: async () => (await supabase.from("grades").select("id, name").order("sort_order")).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("grades").select("id, name").order("sort_order")).data ?? [],
   });
   const { data: subjects } = useQuery({
     queryKey: ["subjects"],
-    queryFn: async () => (await supabase.from("subjects").select("id, name").order("name")).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("subjects").select("id, name").order("name")).data ?? [],
   });
   const { data: teachers } = useQuery({
     queryKey: ["teacher-profiles"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("id, full_name, email").order("full_name");
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .order("full_name");
       return data ?? [];
     },
   });
@@ -131,11 +139,33 @@ function NewModeration() {
       </div>
 
       <section className="card-elevated p-6 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-        <NumberField label={t("moderation.academicYear")} value={state.academic_year} onChange={(v) => setState({ ...state, academic_year: v })} />
-        <SelectField label={t("moderation.quarter")} value={String(state.quarter)} options={["1", "2", "3", "4"]} onChange={(v) => setState({ ...state, quarter: Number(v) })} />
-        <SelectField label={t("moderation.cycle")} value={String(state.cycle)} options={["1", "2", "3", "4"]} onChange={(v) => setState({ ...state, cycle: Number(v) })} />
-        <TextField label={t("moderation.weeks")} value={state.weeks} onChange={(v) => setState({ ...state, weeks: v })} />
-        <DateField label={t("moderation.date")} value={state.moderation_date} onChange={(v) => setState({ ...state, moderation_date: v })} />
+        <NumberField
+          label={t("moderation.academicYear")}
+          value={state.academic_year}
+          onChange={(v) => setState({ ...state, academic_year: v })}
+        />
+        <SelectField
+          label={t("moderation.quarter")}
+          value={String(state.quarter)}
+          options={["1", "2", "3", "4"]}
+          onChange={(v) => setState({ ...state, quarter: Number(v) })}
+        />
+        <SelectField
+          label={t("moderation.cycle")}
+          value={String(state.cycle)}
+          options={["1", "2", "3", "4"]}
+          onChange={(v) => setState({ ...state, cycle: Number(v) })}
+        />
+        <TextField
+          label={t("moderation.weeks")}
+          value={state.weeks}
+          onChange={(v) => setState({ ...state, weeks: v })}
+        />
+        <DateField
+          label={t("moderation.date")}
+          value={state.moderation_date}
+          onChange={(v) => setState({ ...state, moderation_date: v })}
+        />
         <SelectField
           label={t("moderation.grade")}
           value={state.grade_id}
@@ -151,7 +181,10 @@ function NewModeration() {
         <SelectField
           label={t("moderation.teacher")}
           value={state.teacher_id}
-          options={(teachers ?? []).map((tp) => ({ value: tp.id, label: tp.full_name || tp.email || "—" }))}
+          options={(teachers ?? []).map((tp) => ({
+            value: tp.id,
+            label: tp.full_name || tp.email || "—",
+          }))}
           onChange={(v) => setState({ ...state, teacher_id: v })}
         />
       </section>
@@ -159,7 +192,10 @@ function NewModeration() {
       <section className="card-elevated p-6 space-y-4">
         <h2 className="font-semibold text-lg">Moderation checklist</h2>
         {items.map((it) => (
-          <div key={it.key} className="grid gap-2 md:grid-cols-[1fr_120px] items-start border-b border-border pb-3 last:border-b-0">
+          <div
+            key={it.key}
+            className="grid gap-2 md:grid-cols-[1fr_120px] items-start border-b border-border pb-3 last:border-b-0"
+          >
             <div>
               <div className="font-medium">{t(it.labelKey)}</div>
               <textarea
@@ -219,15 +255,24 @@ function NewModeration() {
       <div className="card-elevated p-6 flex items-center justify-between">
         <div className="text-sm">
           <div className="text-muted-foreground">
-            {t("moderation.total")}: <span className="font-semibold text-foreground">{total} / {totalMax}</span>
+            {t("moderation.total")}:{" "}
+            <span className="font-semibold text-foreground">
+              {total} / {totalMax}
+            </span>
           </div>
           <div className="text-2xl font-bold">{percentage.toFixed(1)}%</div>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => save(false)} className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
+          <button
+            onClick={() => save(false)}
+            className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+          >
             {t("moderation.saveDraft")}
           </button>
-          <button onClick={() => save(true)} className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:brightness-110">
+          <button
+            onClick={() => save(true)}
+            className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:brightness-110"
+          >
             {t("moderation.submit")}
           </button>
         </div>
@@ -236,27 +281,65 @@ function NewModeration() {
   );
 }
 
-function TextField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function TextField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <label className="block">
       <span className="text-sm font-medium">{label}</span>
-      <input value={value} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      />
     </label>
   );
 }
-function NumberField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+function NumberField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
   return (
     <label className="block">
       <span className="text-sm font-medium">{label}</span>
-      <input type="number" value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      />
     </label>
   );
 }
-function DateField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <label className="block">
       <span className="text-sm font-medium">{label}</span>
-      <input type="date" value={value} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      />
     </label>
   );
 }
@@ -274,7 +357,11 @@ function SelectField({
   return (
     <label className="block">
       <span className="text-sm font-medium">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      >
         <option value="">—</option>
         {options.map((o) => {
           const v = typeof o === "string" ? o : o.value;

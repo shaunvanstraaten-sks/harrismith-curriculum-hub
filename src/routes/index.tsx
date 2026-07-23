@@ -15,7 +15,10 @@ export const Route = createFileRoute("/")({
         content:
           "Secure, bilingual curriculum management and moderation platform for Harrismith Primary School staff.",
       },
-      { property: "og:title", content: "Harrismith Primary School — Curriculum & Moderation Portal" },
+      {
+        property: "og:title",
+        content: "Harrismith Primary School — Curriculum & Moderation Portal",
+      },
       {
         property: "og:description",
         content:
@@ -62,13 +65,10 @@ function LandingPage() {
           <div className="inline-block rounded-full bg-white/10 px-3 py-1 text-xs uppercase tracking-widest mb-4">
             Semper Procedo
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-            {t("app.subtitle")}
-          </h1>
+          <h1 className="text-4xl md:text-5xl font-bold leading-tight">{t("app.subtitle")}</h1>
           <p className="mt-6 text-white/80 text-lg max-w-lg">
-            A secure, bilingual (English & Afrikaans) platform that digitises curriculum
-            moderation, tracks coverage and empowers school leadership with real-time
-            insight.
+            A secure, bilingual (English & Afrikaans) platform that digitises curriculum moderation,
+            tracks coverage and empowers school leadership with real-time insight.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link

@@ -10,6 +10,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
 
+import { SpeedInsights } from "@vercel/speed-insights/react";
+
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import i18n from "../lib/i18n";
@@ -88,8 +90,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Harrismith Primary — Curriculum & Moderation Portal" },
       {
         property: "og:description",
-        content:
-          "Bilingual (EN/AF) curriculum moderation platform for Harrismith Primary School.",
+        content: "Bilingual (EN/AF) curriculum moderation platform for Harrismith Primary School.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -117,6 +118,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
+        <SpeedInsights />
         <Scripts />
       </body>
     </html>

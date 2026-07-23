@@ -2,12 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
-export type AppRole =
-  | "administrator"
-  | "principal"
-  | "hod"
-  | "head_of_subject"
-  | "teacher";
+export type AppRole = "administrator" | "principal" | "hod" | "head_of_subject" | "teacher";
 
 export interface AuthState {
   user: User | null;
@@ -36,11 +31,7 @@ export function useAuth(): AuthState {
       }
       const [{ data: rs }, { data: p }] = await Promise.all([
         supabase.from("user_roles").select("role").eq("user_id", u.id),
-        supabase
-          .from("profiles")
-          .select("is_approved, full_name")
-          .eq("id", u.id)
-          .maybeSingle(),
+        supabase.from("profiles").select("is_approved, full_name").eq("id", u.id).maybeSingle(),
       ]);
       if (!mounted) return;
       setRoles((rs ?? []).map((r) => r.role as AppRole));
