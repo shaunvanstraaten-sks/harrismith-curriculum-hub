@@ -8,9 +8,11 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   templateFor,
   checklistItemsFlat,
-  answerToScore,
-  type ChecklistAnswer,
+  complianceToScore,
+  SCALES,
+  type Compliance,
   type MetaField,
+  type ScaleKey,
 } from "@/lib/moderation-templates";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -57,7 +59,7 @@ function NewModeration() {
   const [scores, setScores] = useState<Record<string, { score: number; comment: string }>>(
     () => Object.fromEntries(scoredItems.map((i) => [i.key, { score: 0, comment: "" }])),
   );
-  const [answers, setAnswers] = useState<Record<string, ChecklistAnswer>>({});
+  const [answers, setAnswers] = useState<Record<string, Compliance>>({});
 
   const { data: grades } = useQuery({
     queryKey: ["grades"],
@@ -79,18 +81,28 @@ function NewModeration() {
   const total = scoredItems.reduce((a, b) => a + (scores[b.key]?.score ?? 0), 0);
   const percentage = totalMax ? (total / totalMax) * 100 : 0;
 
+  // Live compliance % for scored checklists (Book Control).
+  const checklistTotals = checklist.reduce(
+    (acc, it) => {
+      const { score, max } = complianceToScore(answers[it.key] ?? "na");
+      return { score: acc.score + score, max: acc.max + max };
+    },
+    { score: 0, max: 0 },
+  );
+  const checklistPct = checklistTotals.max ? (checklistTotals.score / checklistTotals.max) * 100 : 0;
+  const answeredCount = checklist.filter((it) => answers[it.key]).length;
+
   const save = async (submit: boolean) => {
     if (!cfg || !tpl || !user) return;
     if (!state.teacher_id || !state.subject_id || !state.grade_id) {
       toast.error("Please select teacher, subject and grade.");
       return;
     }
-    if (tpl.mode === "checklist" && (!state.type_of_moderation || !state.type_of_assessment)) {
+    if (tpl.metaFields.includes("type_of_moderation") && (!state.type_of_moderation || !state.type_of_assessment)) {
       toast.error("Please select the type of moderation and type of assessment.");
       return;
     }
 
-    // Build the per-item rows + totals (checklist encodes Yes/No/N-A into score/max_score).
     let rowTotal = 0;
     let rowMax = 0;
     const rowTemplates: Array<{ item_key: string; item_label: string; score: number; max_score: number; comment: string }> = [];
@@ -106,12 +118,12 @@ function NewModeration() {
       if (submit) {
         const unanswered = checklist.filter((it) => !answers[it.key]);
         if (unanswered.length) {
-          toast.error(`Please answer all ${checklist.length} checklist items (${unanswered.length} remaining).`);
+          toast.error(`Please answer all ${checklist.length} items (${unanswered.length} remaining).`);
           return;
         }
       }
       checklist.forEach((it) => {
-        const { score, max } = answerToScore(answers[it.key] ?? "na");
+        const { score, max } = complianceToScore(answers[it.key] ?? "na");
         rowTotal += score;
         rowMax += max;
         rowTemplates.push({ item_key: it.key, item_label: t(it.labelKey), score, max_score: max, comment: "" });
@@ -143,11 +155,7 @@ function NewModeration() {
       created_by: user.id,
     };
 
-    const { data: sub, error } = await supabase
-      .from("moderation_submissions")
-      .insert(payload)
-      .select("id")
-      .single();
+    const { data: sub, error } = await supabase.from("moderation_submissions").insert(payload).select("id").single();
     if (error) {
       toast.error(error.message);
       return;
@@ -163,6 +171,10 @@ function NewModeration() {
   };
 
   if (!cfg || !tpl) return <div>Unknown type</div>;
+
+  const teacherLabel = tpl.teacherLabelKey ? t(tpl.teacherLabelKey) : t("moderation.teacher");
+  const isChecklist = tpl.mode === "checklist";
+  const learnersField = tpl.mode === "checklist" && tpl.learnersField;
 
   const renderMeta = (field: MetaField) => {
     switch (field) {
@@ -183,7 +195,7 @@ function NewModeration() {
       case "subject":
         return <SelectField key={field} label={t("moderation.subject")} value={state.subject_id} options={(subjects ?? []).map((s) => ({ value: s.id, label: s.name }))} onChange={(v) => setState({ ...state, subject_id: v })} />;
       case "teacher":
-        return <SelectField key={field} label={tpl.mode === "checklist" ? t("moderation.examiner") : t("moderation.teacher")} value={state.teacher_id} options={(teachers ?? []).map((tp) => ({ value: tp.id, label: tp.full_name || tp.email || "—" }))} onChange={(v) => setState({ ...state, teacher_id: v })} />;
+        return <SelectField key={field} label={teacherLabel} value={state.teacher_id} options={(teachers ?? []).map((tp) => ({ value: tp.id, label: tp.full_name || tp.email || "—" }))} onChange={(v) => setState({ ...state, teacher_id: v })} />;
       case "type_of_moderation":
         return <SelectField key={field} label={t("moderation.typeOfModeration")} value={state.type_of_moderation} options={[{ value: "school", label: t("opts.school") }, { value: "department", label: t("opts.department") }]} onChange={(v) => setState({ ...state, type_of_moderation: v })} />;
       case "type_of_assessment":
@@ -242,12 +254,7 @@ function NewModeration() {
               {sec.items.map((it) => (
                 <div key={it.key} className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3 last:border-b-0">
                   <div className="flex-1 min-w-[240px] text-sm">{t(it.labelKey)}</div>
-                  <AnswerToggle
-                    value={answers[it.key]}
-                    allowNa={it.allowNa}
-                    onChange={(v) => setAnswers({ ...answers, [it.key]: v })}
-                    labels={{ yes: t("answer.yes"), no: t("answer.no"), na: t("answer.na") }}
-                  />
+                  <ScaleToggle scale={it.scale} value={answers[it.key]} onChange={(v) => setAnswers({ ...answers, [it.key]: v })} t={t} />
                 </div>
               ))}
             </div>
@@ -256,8 +263,20 @@ function NewModeration() {
       )}
 
       <section className="card-elevated p-6 space-y-4">
+        {learnersField && (
+          <label className="block">
+            <span className="text-sm font-medium">{t("moderation.learnersChecked")}</span>
+            <textarea
+              value={state.recommendations}
+              onChange={(e) => setState({ ...state, recommendations: e.target.value })}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[60px]"
+            />
+          </label>
+        )}
         <label className="block">
-          <span className="text-sm font-medium">{tpl.mode === "checklist" ? t("moderation.comments") : t("moderation.generalComments")}</span>
+          <span className="text-sm font-medium">
+            {learnersField ? t("moderation.otherComments") : isChecklist ? t("moderation.comments") : t("moderation.generalComments")}
+          </span>
           <textarea
             value={state.general_comments}
             onChange={(e) => setState({ ...state, general_comments: e.target.value })}
@@ -284,10 +303,13 @@ function NewModeration() {
             </div>
             <div className="text-2xl font-bold">{percentage.toFixed(1)}%</div>
           </div>
-        ) : (
-          <div className="text-sm text-muted-foreground">
-            {checklist.filter((it) => answers[it.key]).length} / {checklist.length} answered
+        ) : tpl.showScore ? (
+          <div className="text-sm">
+            <div className="text-muted-foreground">{answeredCount} / {checklist.length} answered</div>
+            <div className="text-2xl font-bold">{checklistPct.toFixed(1)}%</div>
           </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">{answeredCount} / {checklist.length} answered</div>
         )}
         <div className="flex gap-2">
           <button onClick={() => save(false)} className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
@@ -302,34 +324,38 @@ function NewModeration() {
   );
 }
 
-function AnswerToggle({
+function ScaleToggle({
+  scale,
   value,
-  allowNa,
   onChange,
-  labels,
+  t,
 }: {
-  value: ChecklistAnswer | undefined;
-  allowNa?: boolean;
-  onChange: (v: ChecklistAnswer) => void;
-  labels: { yes: string; no: string; na: string };
+  scale: ScaleKey;
+  value: Compliance | undefined;
+  onChange: (v: Compliance) => void;
+  t: (k: string) => string;
 }) {
-  const opts: { key: ChecklistAnswer; label: string; active: string }[] = [
-    { key: "yes", label: labels.yes, active: "bg-status-green text-white border-status-green" },
-    { key: "no", label: labels.no, active: "bg-status-red text-white border-status-red" },
-    ...(allowNa ? [{ key: "na" as ChecklistAnswer, label: labels.na, active: "bg-muted-foreground text-white border-muted-foreground" }] : []),
-  ];
   return (
-    <div className="flex gap-1">
-      {opts.map((o) => (
-        <button
-          key={o.key}
-          type="button"
-          onClick={() => onChange(o.key)}
-          className={`rounded-md border px-3 py-1.5 text-sm font-medium transition ${value === o.key ? o.active : "border-input bg-background hover:bg-accent"}`}
-        >
-          {o.label}
-        </button>
-      ))}
+    <div className="flex flex-wrap gap-1">
+      {SCALES[scale].map((o) => {
+        const active = value === o.compliance;
+        const activeCls =
+          o.compliance === "compliant"
+            ? "bg-status-green text-white border-status-green"
+            : o.compliance === "flag"
+              ? "bg-status-red text-white border-status-red"
+              : "bg-muted-foreground text-white border-muted-foreground";
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onChange(o.compliance)}
+            className={`rounded-md border px-3 py-1.5 text-sm font-medium transition ${active ? activeCls : "border-input bg-background hover:bg-accent"}`}
+          >
+            {t(o.labelKey)}
+          </button>
+        );
+      })}
     </div>
   );
 }

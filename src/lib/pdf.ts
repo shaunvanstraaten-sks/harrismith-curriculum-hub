@@ -2,8 +2,10 @@ import jsPDF from "jspdf";
 
 export interface PdfSubmission {
   mode?: "scored" | "checklist";
+  showPercentage?: boolean;
   title: string;
   teacherName: string;
+  teacherLabel?: string;
   grade: string;
   subject: string;
   academicYear: number;
@@ -20,6 +22,7 @@ export interface PdfSubmission {
   percentage: number;
   generalComments?: string;
   recommendations?: string;
+  learnersLabel?: string;
 }
 
 async function loadImageAsDataUrl(url: string): Promise<string | null> {
@@ -65,7 +68,7 @@ export async function generateModerationPdf(s: PdfSubmission) {
   doc.setFontSize(10);
   const isChecklist = s.mode === "checklist";
   const meta: Array<[string, string]> = [
-    [isChecklist ? "Teacher (Examiner)" : "Teacher", s.teacherName],
+    [s.teacherLabel ?? (isChecklist ? "Teacher (Examiner)" : "Teacher"), s.teacherName],
     ["Grade", s.grade],
     ["Subject", s.subject],
     ["Academic Year", String(s.academicYear)],
@@ -114,6 +117,16 @@ export async function generateModerationPdf(s: PdfSubmission) {
       });
       y += 8;
     });
+    if (s.showPercentage) {
+      y += 6;
+      doc.setDrawColor(200);
+      doc.line(40, y, W - 40, y);
+      y += 16;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(`Compliance: ${s.totalScore} / ${s.maxScore}    ${s.percentage.toFixed(1)}%`, 40, y);
+      y += 20;
+    }
   } else {
     doc.setFont("helvetica", "bold");
     doc.text("Scores", 40, y);
@@ -160,7 +173,7 @@ export async function generateModerationPdf(s: PdfSubmission) {
 
   if (s.recommendations) {
     doc.setFont("helvetica", "bold");
-    doc.text("Recommendations", 40, y);
+    doc.text(s.learnersLabel ?? "Recommendations", 40, y);
     y += 14;
     doc.setFont("helvetica", "normal");
     const lines = doc.splitTextToSize(s.recommendations, W - 80);

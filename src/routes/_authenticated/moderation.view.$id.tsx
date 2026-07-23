@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { generateModerationPdf } from "@/lib/pdf";
-import { templateFor, checklistItemsFlat, scoreToAnswer } from "@/lib/moderation-templates";
+import { templateFor, scoreToCompliance, optionForCompliance, type Compliance } from "@/lib/moderation-templates";
 import type { Database } from "@/integrations/supabase/types";
 import { Download } from "lucide-react";
 
@@ -31,11 +31,7 @@ function ViewModeration() {
         .eq("id", id)
         .single();
       if (error) throw error;
-      const { data: scores } = await supabase
-        .from("moderation_scores")
-        .select("*")
-        .eq("submission_id", id)
-        .order("sort_order");
+      const { data: scores } = await supabase.from("moderation_scores").select("*").eq("submission_id", id).order("sort_order");
       return { sub, scores: scores ?? [] };
     },
   });
@@ -45,36 +41,41 @@ function ViewModeration() {
   const modType = sub.moderation_type as ModType;
   const tpl = templateFor(modType);
   const isChecklist = tpl.mode === "checklist";
+  const showScore = tpl.mode === "scored" || (tpl.mode === "checklist" && tpl.showScore);
+  const learnersField = tpl.mode === "checklist" && tpl.learnersField;
   const anyS = sub as any;
 
   const teacherName = anyS.teacher?.full_name || anyS.teacher?.email || "—";
   const hosName = anyS.hos?.full_name || anyS.hos?.email || "—";
   const gradeName = anyS.grades?.name ?? "—";
   const subjectName = anyS.subjects?.name ?? "—";
-  const answerLabel = (a: "yes" | "no" | "na") => t(`answer.${a}`);
+  const teacherLabel = tpl.teacherLabelKey ? t(tpl.teacherLabelKey) : t("moderation.teacher");
   const optLabel = (v: string | null) => (v ? t(`opts.${v}`, v) : "—");
 
   const pct = Number(sub.percentage);
   const color = pct >= 85 ? "bg-status-green" : pct >= 70 ? "bg-status-orange" : "bg-status-red";
 
-  // Grouped checklist for view + PDF (from template order + stored score/max).
+  // Rebuild the grouped checklist from the template order + stored score/max.
   const scoreByKey = Object.fromEntries(scores.map((s) => [s.item_key, s]));
-  const checklistSections = isChecklist
-    ? tpl.sections.map((sec) => ({
-        title: t(sec.titleKey),
-        items: sec.items.map((it) => {
-          const row = scoreByKey[it.key];
-          const ans = row ? scoreToAnswer(Number(row.score), Number(row.max_score)) : "na";
-          return { label: t(it.labelKey), answer: ans };
-        }),
-      }))
-    : [];
+  const checklistSections =
+    tpl.mode === "checklist"
+      ? tpl.sections.map((sec) => ({
+          title: t(sec.titleKey),
+          items: sec.items.map((it) => {
+            const row = scoreByKey[it.key];
+            const compliance: Compliance = row ? scoreToCompliance(Number(row.score), Number(row.max_score)) : "na";
+            const opt = optionForCompliance(it.scale, compliance);
+            return { label: t(it.labelKey), answer: opt ? t(opt.labelKey) : "—", compliance };
+          }),
+        }))
+      : [];
 
   const download = () =>
     generateModerationPdf({
       mode: tpl.mode,
+      showPercentage: showScore,
       title: isChecklist
-        ? `${t("dashboard.preModeration")} — ${t("moderation.term")} ${sub.quarter}`
+        ? `${t(`dashboard.${modType === "book_control" ? "bookControl" : "preModeration"}`)} — ${t("moderation.term")} ${sub.quarter}`
         : `${sub.moderation_type.replace("_", " ")} — Q${sub.quarter} C${sub.cycle}`,
       teacherName,
       grade: gradeName,
@@ -85,27 +86,19 @@ function ViewModeration() {
       weeks: sub.weeks,
       date: sub.moderation_date,
       headOfSubject: hosName,
-      extraMeta: isChecklist
-        ? [
-            [t("moderation.typeOfModeration"), optLabel(sub.type_of_moderation)],
-            [t("moderation.typeOfAssessment"), optLabel(sub.type_of_assessment)],
-          ]
-        : [],
-      scores: scores.map((s) => ({
-        label: s.item_label,
-        score: Number(s.score),
-        max: Number(s.max_score),
-        comment: s.comment ?? "",
-      })),
-      checklistSections: checklistSections.map((sec) => ({
-        title: sec.title,
-        items: sec.items.map((i) => ({ label: i.label, answer: answerLabel(i.answer) })),
-      })),
+      teacherLabel,
+      extraMeta: [
+        ...(sub.type_of_moderation ? ([[t("moderation.typeOfModeration"), optLabel(sub.type_of_moderation)]] as [string, string][]) : []),
+        ...(sub.type_of_assessment ? ([[t("moderation.typeOfAssessment"), optLabel(sub.type_of_assessment)]] as [string, string][]) : []),
+      ],
+      scores: scores.map((s) => ({ label: s.item_label, score: Number(s.score), max: Number(s.max_score), comment: s.comment ?? "" })),
+      checklistSections,
       totalScore: Number(sub.total_score),
       maxScore: Number(sub.max_score),
       percentage: Number(sub.percentage),
       generalComments: sub.general_comments ?? undefined,
       recommendations: sub.recommendations ?? undefined,
+      learnersLabel: learnersField ? t("moderation.learnersChecked") : undefined,
     });
 
   return (
@@ -116,35 +109,28 @@ function ViewModeration() {
           <h1 className="text-3xl font-bold">
             {isChecklist ? `${t("moderation.term")} ${sub.quarter}` : `Q${sub.quarter} · C${sub.cycle} · ${sub.weeks}`}
           </h1>
-          <div className="text-sm text-muted-foreground mt-1">
-            {sub.moderation_date} · {sub.academic_year}
-          </div>
+          <div className="text-sm text-muted-foreground mt-1">{sub.moderation_date} · {sub.academic_year}</div>
         </div>
-        <button
-          onClick={download}
-          className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold"
-        >
+        <button onClick={download} className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold">
           <Download size={16} /> {t("moderation.downloadPdf")}
         </button>
       </div>
 
       {sub.status === "submitted" && (
-        <div className="rounded-md bg-status-green/10 border border-status-green/30 px-4 py-2 text-sm">
-          {t("moderation.submittedReadOnly")}
-        </div>
+        <div className="rounded-md bg-status-green/10 border border-status-green/30 px-4 py-2 text-sm">{t("moderation.submittedReadOnly")}</div>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 text-sm card-elevated p-6">
-        <Meta label={isChecklist ? t("moderation.examiner") : t("moderation.teacher")} value={teacherName} />
+        <Meta label={teacherLabel} value={teacherName} />
         <Meta label={t("moderation.grade")} value={gradeName} />
         <Meta label={t("moderation.subject")} value={subjectName} />
         <Meta label={isChecklist ? t("moderation.moderator") : t("moderation.headOfSubject")} value={hosName} />
-        {isChecklist && <Meta label={t("moderation.typeOfModeration")} value={optLabel(sub.type_of_moderation)} />}
-        {isChecklist && <Meta label={t("moderation.typeOfAssessment")} value={optLabel(sub.type_of_assessment)} />}
+        {sub.type_of_moderation && <Meta label={t("moderation.typeOfModeration")} value={optLabel(sub.type_of_moderation)} />}
+        {sub.type_of_assessment && <Meta label={t("moderation.typeOfAssessment")} value={optLabel(sub.type_of_assessment)} />}
         <Meta label={t("moderation.status")} value={sub.status} />
       </div>
 
-      {isChecklist ? (
+      {tpl.mode === "checklist" ? (
         <div className="space-y-4">
           {checklistSections.map((sec) => (
             <div key={sec.title} className="card-elevated overflow-hidden">
@@ -154,8 +140,8 @@ function ViewModeration() {
                   {sec.items.map((it, i) => (
                     <tr key={i} className="border-t border-border">
                       <td className="p-3">{it.label}</td>
-                      <td className="p-3 text-right w-20">
-                        <AnswerBadge answer={it.answer} label={answerLabel(it.answer)} />
+                      <td className="p-3 text-right w-40">
+                        <AnswerBadge compliance={it.compliance} label={it.answer} />
                       </td>
                     </tr>
                   ))}
@@ -165,44 +151,50 @@ function ViewModeration() {
           ))}
         </div>
       ) : (
-        <>
-          <div className="card-elevated overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left p-3">Item</th>
-                  <th className="text-left p-3">{t("moderation.comment")}</th>
-                  <th className="text-right p-3">{t("moderation.score")}</th>
+        <div className="card-elevated overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left p-3">Item</th>
+                <th className="text-left p-3">{t("moderation.comment")}</th>
+                <th className="text-right p-3">{t("moderation.score")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scores.map((s) => (
+                <tr key={s.id} className="border-t border-border">
+                  <td className="p-3 font-medium">{s.item_label}</td>
+                  <td className="p-3 text-muted-foreground">{s.comment || "—"}</td>
+                  <td className="p-3 text-right font-semibold">{Number(s.score)} / {Number(s.max_score)}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {scores.map((s) => (
-                  <tr key={s.id} className="border-t border-border">
-                    <td className="p-3 font-medium">{s.item_label}</td>
-                    <td className="p-3 text-muted-foreground">{s.comment || "—"}</td>
-                    <td className="p-3 text-right font-semibold">{Number(s.score)} / {Number(s.max_score)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="card-elevated p-6 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              {t("moderation.total")}: <span className="text-foreground font-semibold">{Number(sub.total_score)} / {Number(sub.max_score)}</span>
-            </div>
-            <div className={`rounded-md text-white px-4 py-2 font-bold text-lg ${color}`}>{pct.toFixed(1)}%</div>
-          </div>
-        </>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
+      {showScore && (
+        <div className="card-elevated p-6 flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            {t("moderation.total")}: <span className="text-foreground font-semibold">{Number(sub.total_score)} / {Number(sub.max_score)}</span>
+          </div>
+          <div className={`rounded-md text-white px-4 py-2 font-bold text-lg ${color}`}>{pct.toFixed(1)}%</div>
+        </div>
+      )}
+
+      {learnersField && sub.recommendations && (
+        <div className="card-elevated p-6">
+          <div className="font-semibold mb-2">{t("moderation.learnersChecked")}</div>
+          <p className="text-sm whitespace-pre-wrap text-muted-foreground">{sub.recommendations}</p>
+        </div>
+      )}
       {sub.general_comments && (
         <div className="card-elevated p-6">
-          <div className="font-semibold mb-2">{isChecklist ? t("moderation.comments") : t("moderation.generalComments")}</div>
+          <div className="font-semibold mb-2">{learnersField ? t("moderation.otherComments") : isChecklist ? t("moderation.comments") : t("moderation.generalComments")}</div>
           <p className="text-sm whitespace-pre-wrap text-muted-foreground">{sub.general_comments}</p>
         </div>
       )}
-      {sub.recommendations && (
+      {!learnersField && sub.recommendations && (
         <div className="card-elevated p-6">
           <div className="font-semibold mb-2">{t("moderation.recommendations")}</div>
           <p className="text-sm whitespace-pre-wrap text-muted-foreground">{sub.recommendations}</p>
@@ -212,11 +204,11 @@ function ViewModeration() {
   );
 }
 
-function AnswerBadge({ answer, label }: { answer: "yes" | "no" | "na"; label: string }) {
+function AnswerBadge({ compliance, label }: { compliance: Compliance; label: string }) {
   const cls =
-    answer === "yes"
+    compliance === "compliant"
       ? "bg-status-green/15 text-status-green border-status-green/30"
-      : answer === "no"
+      : compliance === "flag"
         ? "bg-status-red/15 text-status-red border-status-red/30"
         : "bg-muted text-muted-foreground border-border";
   return <span className={`inline-block rounded-md border px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>;
