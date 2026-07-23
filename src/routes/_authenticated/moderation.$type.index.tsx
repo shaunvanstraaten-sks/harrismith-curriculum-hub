@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/moderation/$type/")({
 
 function TypeList() {
   const { t } = useTranslation();
-  const { type } = useParams({ from: "/_authenticated/moderation/$type" });
+  const { type } = useParams({ from: "/_authenticated/moderation/$type/" });
   const cfg = TYPE_MAP[type];
   const { roles } = useAuth();
   const canCreate = hasAnyRole(roles, ["administrator", "head_of_subject"]);
