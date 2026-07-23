@@ -13,7 +13,7 @@ import { I18nextProvider } from "react-i18next";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import i18n from "../lib/i18n";
-import { Toaster } from "songer";
+import { Toaster } from "sonner";
 
 function NotFoundComponent() {
   return (
