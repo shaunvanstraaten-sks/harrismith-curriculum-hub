@@ -13,8 +13,13 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedModerationIndexRouteImport } from './routes/_authenticated/moderation.index'
+import { Route as AuthenticatedModerationTypeRouteImport } from './routes/_authenticated/moderation.$type'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedModerationViewIdRouteImport } from './routes/_authenticated/moderation.view.$id'
+import { Route as AuthenticatedModerationTypeNewRouteImport } from './routes/_authenticated/moderation.$type.new'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -35,6 +40,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -46,20 +56,53 @@ const AuthenticatedModerationIndexRoute =
     path: '/moderation/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedModerationTypeRoute =
+  AuthenticatedModerationTypeRouteImport.update({
+    id: '/moderation/$type',
+    path: '/moderation/$type',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedModerationViewIdRoute =
+  AuthenticatedModerationViewIdRouteImport.update({
+    id: '/moderation/view/$id',
+    path: '/moderation/view/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedModerationTypeNewRoute =
+  AuthenticatedModerationTypeNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedModerationTypeRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/moderation/$type': typeof AuthenticatedModerationTypeRouteWithChildren
   '/moderation/': typeof AuthenticatedModerationIndexRoute
+  '/moderation/$type/new': typeof AuthenticatedModerationTypeNewRoute
+  '/moderation/view/$id': typeof AuthenticatedModerationViewIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/moderation/$type': typeof AuthenticatedModerationTypeRouteWithChildren
   '/moderation': typeof AuthenticatedModerationIndexRoute
+  '/moderation/$type/new': typeof AuthenticatedModerationTypeNewRoute
+  '/moderation/view/$id': typeof AuthenticatedModerationViewIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,13 +111,38 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/moderation/$type': typeof AuthenticatedModerationTypeRouteWithChildren
   '/_authenticated/moderation/': typeof AuthenticatedModerationIndexRoute
+  '/_authenticated/moderation/$type/new': typeof AuthenticatedModerationTypeNewRoute
+  '/_authenticated/moderation/view/$id': typeof AuthenticatedModerationViewIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/reset-password' | '/dashboard' | '/moderation/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/dashboard'
+    | '/reports'
+    | '/admin/users'
+    | '/moderation/$type'
+    | '/moderation/'
+    | '/moderation/$type/new'
+    | '/moderation/view/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/reset-password' | '/dashboard' | '/moderation'
+  to:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/dashboard'
+    | '/reports'
+    | '/admin/users'
+    | '/moderation/$type'
+    | '/moderation'
+    | '/moderation/$type/new'
+    | '/moderation/view/$id'
   id:
     | '__root__'
     | '/'
@@ -82,7 +150,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/dashboard'
+    | '/_authenticated/reports'
+    | '/_authenticated/admin/users'
+    | '/_authenticated/moderation/$type'
     | '/_authenticated/moderation/'
+    | '/_authenticated/moderation/$type/new'
+    | '/_authenticated/moderation/view/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -122,6 +195,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -136,17 +216,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedModerationIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/moderation/$type': {
+      id: '/_authenticated/moderation/$type'
+      path: '/moderation/$type'
+      fullPath: '/moderation/$type'
+      preLoaderRoute: typeof AuthenticatedModerationTypeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/moderation/view/$id': {
+      id: '/_authenticated/moderation/view/$id'
+      path: '/moderation/view/$id'
+      fullPath: '/moderation/view/$id'
+      preLoaderRoute: typeof AuthenticatedModerationViewIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/moderation/$type/new': {
+      id: '/_authenticated/moderation/$type/new'
+      path: '/new'
+      fullPath: '/moderation/$type/new'
+      preLoaderRoute: typeof AuthenticatedModerationTypeNewRouteImport
+      parentRoute: typeof AuthenticatedModerationTypeRoute
+    }
   }
 }
 
+interface AuthenticatedModerationTypeRouteChildren {
+  AuthenticatedModerationTypeNewRoute: typeof AuthenticatedModerationTypeNewRoute
+}
+
+const AuthenticatedModerationTypeRouteChildren: AuthenticatedModerationTypeRouteChildren =
+  {
+    AuthenticatedModerationTypeNewRoute: AuthenticatedModerationTypeNewRoute,
+  }
+
+const AuthenticatedModerationTypeRouteWithChildren =
+  AuthenticatedModerationTypeRoute._addFileChildren(
+    AuthenticatedModerationTypeRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedModerationTypeRoute: typeof AuthenticatedModerationTypeRouteWithChildren
   AuthenticatedModerationIndexRoute: typeof AuthenticatedModerationIndexRoute
+  AuthenticatedModerationViewIdRoute: typeof AuthenticatedModerationViewIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedModerationTypeRoute:
+    AuthenticatedModerationTypeRouteWithChildren,
   AuthenticatedModerationIndexRoute: AuthenticatedModerationIndexRoute,
+  AuthenticatedModerationViewIdRoute: AuthenticatedModerationViewIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
