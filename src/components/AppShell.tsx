@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, hasAnyRole, type AppRole } from "@/hooks/use-auth";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import logoAsset from "@/assets/hps-logo.jpg.asset.json";
 import { LogOut, LayoutDashboard, ClipboardCheck, FileText, Users } from "lucide-react";
 
 interface NavItem {
@@ -52,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <Link to="/dashboard" className="flex items-center gap-3">
             <img
-              src={logoAsset.url}
+              src="/hps-logo.jpg"
               alt="Harrismith Primary School crest"
               className="h-12 w-12 rounded bg-white p-1 shadow"
             />

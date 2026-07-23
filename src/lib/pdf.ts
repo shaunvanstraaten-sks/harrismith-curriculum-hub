@@ -1,5 +1,4 @@
 import jsPDF from "jspdf";
-import logoAsset from "@/assets/hps-logo.jpg.asset.json";
 
 export interface PdfSubmission {
   title: string;
@@ -39,7 +38,7 @@ export async function generateModerationPdf(s: PdfSubmission) {
   const W = doc.internal.pageSize.getWidth();
   let y = 40;
 
-  const logo = await loadImageAsDataUrl(logoAsset.url);
+  const logo = await loadImageAsDataUrl("/hps-logo.jpg");
   if (logo) doc.addImage(logo, "JPEG", 40, y, 50, 50);
 
   doc.setFont("helvetica", "bold");
