@@ -16,8 +16,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedModerationIndexRouteImport } from './routes/_authenticated/moderation.index'
-import { Route as AuthenticatedModerationTypeRouteImport } from './routes/_authenticated/moderation.$type'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedModerationTypeIndexRouteImport } from './routes/_authenticated/moderation.$type.index'
 import { Route as AuthenticatedModerationViewIdRouteImport } from './routes/_authenticated/moderation.view.$id'
 import { Route as AuthenticatedModerationTypeNewRouteImport } from './routes/_authenticated/moderation.$type.new'
 
@@ -56,17 +56,17 @@ const AuthenticatedModerationIndexRoute =
     path: '/moderation/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedModerationTypeRoute =
-  AuthenticatedModerationTypeRouteImport.update({
-    id: '/moderation/$type',
-    path: '/moderation/$type',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedModerationTypeIndexRoute =
+  AuthenticatedModerationTypeIndexRouteImport.update({
+    id: '/moderation/$type/',
+    path: '/moderation/$type/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedModerationViewIdRoute =
   AuthenticatedModerationViewIdRouteImport.update({
     id: '/moderation/view/$id',
@@ -75,9 +75,9 @@ const AuthenticatedModerationViewIdRoute =
   } as any)
 const AuthenticatedModerationTypeNewRoute =
   AuthenticatedModerationTypeNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AuthenticatedModerationTypeRoute,
+    id: '/moderation/$type/new',
+    path: '/moderation/$type/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -87,10 +87,10 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
-  '/moderation/$type': typeof AuthenticatedModerationTypeRouteWithChildren
   '/moderation/': typeof AuthenticatedModerationIndexRoute
   '/moderation/$type/new': typeof AuthenticatedModerationTypeNewRoute
   '/moderation/view/$id': typeof AuthenticatedModerationViewIdRoute
+  '/moderation/$type/': typeof AuthenticatedModerationTypeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -99,10 +99,10 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
-  '/moderation/$type': typeof AuthenticatedModerationTypeRouteWithChildren
   '/moderation': typeof AuthenticatedModerationIndexRoute
   '/moderation/$type/new': typeof AuthenticatedModerationTypeNewRoute
   '/moderation/view/$id': typeof AuthenticatedModerationViewIdRoute
+  '/moderation/$type': typeof AuthenticatedModerationTypeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -113,10 +113,10 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
-  '/_authenticated/moderation/$type': typeof AuthenticatedModerationTypeRouteWithChildren
   '/_authenticated/moderation/': typeof AuthenticatedModerationIndexRoute
   '/_authenticated/moderation/$type/new': typeof AuthenticatedModerationTypeNewRoute
   '/_authenticated/moderation/view/$id': typeof AuthenticatedModerationViewIdRoute
+  '/_authenticated/moderation/$type/': typeof AuthenticatedModerationTypeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -127,10 +127,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/reports'
     | '/admin/users'
-    | '/moderation/$type'
     | '/moderation/'
     | '/moderation/$type/new'
     | '/moderation/view/$id'
+    | '/moderation/$type/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -139,10 +139,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/reports'
     | '/admin/users'
-    | '/moderation/$type'
     | '/moderation'
     | '/moderation/$type/new'
     | '/moderation/view/$id'
+    | '/moderation/$type'
   id:
     | '__root__'
     | '/'
@@ -152,10 +152,10 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/reports'
     | '/_authenticated/admin/users'
-    | '/_authenticated/moderation/$type'
     | '/_authenticated/moderation/'
     | '/_authenticated/moderation/$type/new'
     | '/_authenticated/moderation/view/$id'
+    | '/_authenticated/moderation/$type/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -216,18 +216,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedModerationIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/moderation/$type': {
-      id: '/_authenticated/moderation/$type'
-      path: '/moderation/$type'
-      fullPath: '/moderation/$type'
-      preLoaderRoute: typeof AuthenticatedModerationTypeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
       path: '/admin/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/moderation/$type/': {
+      id: '/_authenticated/moderation/$type/'
+      path: '/moderation/$type'
+      fullPath: '/moderation/$type/'
+      preLoaderRoute: typeof AuthenticatedModerationTypeIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/moderation/view/$id': {
@@ -239,45 +239,32 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/moderation/$type/new': {
       id: '/_authenticated/moderation/$type/new'
-      path: '/new'
+      path: '/moderation/$type/new'
       fullPath: '/moderation/$type/new'
       preLoaderRoute: typeof AuthenticatedModerationTypeNewRouteImport
-      parentRoute: typeof AuthenticatedModerationTypeRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
-
-interface AuthenticatedModerationTypeRouteChildren {
-  AuthenticatedModerationTypeNewRoute: typeof AuthenticatedModerationTypeNewRoute
-}
-
-const AuthenticatedModerationTypeRouteChildren: AuthenticatedModerationTypeRouteChildren =
-  {
-    AuthenticatedModerationTypeNewRoute: AuthenticatedModerationTypeNewRoute,
-  }
-
-const AuthenticatedModerationTypeRouteWithChildren =
-  AuthenticatedModerationTypeRoute._addFileChildren(
-    AuthenticatedModerationTypeRouteChildren,
-  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
-  AuthenticatedModerationTypeRoute: typeof AuthenticatedModerationTypeRouteWithChildren
   AuthenticatedModerationIndexRoute: typeof AuthenticatedModerationIndexRoute
+  AuthenticatedModerationTypeNewRoute: typeof AuthenticatedModerationTypeNewRoute
   AuthenticatedModerationViewIdRoute: typeof AuthenticatedModerationViewIdRoute
+  AuthenticatedModerationTypeIndexRoute: typeof AuthenticatedModerationTypeIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
-  AuthenticatedModerationTypeRoute:
-    AuthenticatedModerationTypeRouteWithChildren,
   AuthenticatedModerationIndexRoute: AuthenticatedModerationIndexRoute,
+  AuthenticatedModerationTypeNewRoute: AuthenticatedModerationTypeNewRoute,
   AuthenticatedModerationViewIdRoute: AuthenticatedModerationViewIdRoute,
+  AuthenticatedModerationTypeIndexRoute: AuthenticatedModerationTypeIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

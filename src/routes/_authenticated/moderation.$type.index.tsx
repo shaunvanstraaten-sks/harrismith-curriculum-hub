@@ -14,7 +14,7 @@ const TYPE_MAP: Record<string, { db: ModType; labelKey: string }> = {
   book: { db: "book_control", labelKey: "dashboard.bookControl" },
 };
 
-export const Route = createFileRoute("/_authenticated/moderation/$type")({
+export const Route = createFileRoute("/_authenticated/moderation/$type/")({
   component: TypeList,
   head: () => ({
     meta: [{ title: "Moderations — Harrismith Primary" }, { name: "robots", content: "noindex" }],
