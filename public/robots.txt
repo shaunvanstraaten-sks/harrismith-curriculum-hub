@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /auth
+Disallow: /reset-password
+Disallow: /dashboard
+Disallow: /moderation
+Disallow: /reports
+Disallow: /admin
