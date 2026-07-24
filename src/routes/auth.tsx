@@ -28,9 +28,14 @@ function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup" | "forgot">(search.mode ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [initials, setInitials] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [surname, setSurname] = useState("");
   const [username, setUsername] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // How the name will appear in the staff lists, e.g. "D van Straaten".
+  const displayName = [initials.trim(), surname.trim()].filter(Boolean).join(" ");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +51,13 @@ function AuthPage() {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/dashboard`,
-            data: { full_name: fullName, username },
+            data: {
+              initials: initials.trim(),
+              first_name: firstName.trim(),
+              surname: surname.trim(),
+              full_name: displayName,
+              username,
+            },
           },
         });
         if (error) throw error;
@@ -91,7 +102,18 @@ function AuthPage() {
           <form onSubmit={submit} className="mt-6 space-y-4">
             {mode === "signup" && (
               <>
-                <Field label={t("auth.fullName")} value={fullName} onChange={setFullName} required />
+                <div className="grid grid-cols-3 gap-3">
+                  <Field label={t("auth.initials")} value={initials} onChange={setInitials} required />
+                  <div className="col-span-2">
+                    <Field label={t("auth.firstName")} value={firstName} onChange={setFirstName} required />
+                  </div>
+                </div>
+                <Field label={t("auth.surname")} value={surname} onChange={setSurname} required />
+                {displayName && (
+                  <p className="text-xs text-muted-foreground -mt-2">
+                    {t("auth.displayAs")}: <span className="font-semibold text-foreground">{displayName}</span>
+                  </p>
+                )}
                 <Field label={t("auth.username")} value={username} onChange={setUsername} required />
               </>
             )}
