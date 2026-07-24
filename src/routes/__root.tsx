@@ -92,11 +92,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Bilingual (EN/AF) curriculum moderation platform for Harrismith Primary School.",
       },
       { property: "og:type", content: "website" },
+      // Absolute URL — link scrapers (WhatsApp, Facebook, X) do not reliably
+      // resolve relative og:image paths. Update if a custom domain is added.
+      { property: "og:image", content: "https://harrismith-curriculum-hub.vercel.app/og-image.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "Harrismith Primary School crest" },
+      { property: "og:site_name", content: "Harrismith Primary School" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://harrismith-curriculum-hub.vercel.app/og-image.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap",
