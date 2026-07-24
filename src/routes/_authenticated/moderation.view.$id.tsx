@@ -41,7 +41,7 @@ function ViewModeration() {
   const modType = sub.moderation_type as ModType;
   const tpl = templateFor(modType);
   const isChecklist = tpl.mode === "checklist";
-  const showScore = tpl.mode === "scored" || (tpl.mode === "checklist" && tpl.showScore);
+  const showScore = tpl.mode === "scored" || tpl.mode === "stats" || (tpl.mode === "checklist" && tpl.showScore);
   const learnersField = tpl.mode === "checklist" && tpl.learnersField;
   const anyS = sub as any;
 
@@ -70,10 +70,29 @@ function ViewModeration() {
         }))
       : [];
 
+  // Post-Moderation statistics, grouped for display and the PDF.
+  const statsSections =
+    tpl.mode === "stats"
+      ? (["count", "percent"] as const).map((kind) => ({
+          title: t(kind === "count" ? "pmSections.counts" : "pmSections.averages"),
+          items: tpl.fields
+            .filter((f) => f.kind === kind)
+            .map((f) => {
+              const row = scoreByKey[f.key];
+              const v = row ? Number(row.score) : null;
+              return {
+                label: t(f.labelKey),
+                answer: v === null ? "—" : kind === "percent" ? `${v.toFixed(1)}%` : String(v),
+              };
+            }),
+        }))
+      : [];
+
   const download = () =>
     generateModerationPdf({
       mode: tpl.mode,
       showPercentage: showScore,
+      summaryLabel: tpl.mode === "stats" ? t("pmItems.grade_average") : undefined,
       title: isChecklist
         ? `${t(`dashboard.${modType === "book_control" ? "bookControl" : "preModeration"}`)} — ${t("moderation.term")} ${sub.quarter}`
         : `${sub.moderation_type.replace("_", " ")} — Q${sub.quarter} C${sub.cycle}`,
@@ -92,7 +111,7 @@ function ViewModeration() {
         ...(sub.type_of_assessment ? ([[t("moderation.typeOfAssessment"), optLabel(sub.type_of_assessment)]] as [string, string][]) : []),
       ],
       scores: scores.map((s) => ({ label: s.item_label, score: Number(s.score), max: Number(s.max_score), comment: s.comment ?? "" })),
-      checklistSections,
+      checklistSections: tpl.mode === "stats" ? statsSections : checklistSections,
       totalScore: Number(sub.total_score),
       maxScore: Number(sub.max_score),
       percentage: Number(sub.percentage),
@@ -150,6 +169,24 @@ function ViewModeration() {
             </div>
           ))}
         </div>
+      ) : tpl.mode === "stats" ? (
+        <div className="space-y-4">
+          {statsSections.map((sec) => (
+            <div key={sec.title} className="card-elevated overflow-hidden">
+              <div className="bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-primary">{sec.title}</div>
+              <table className="w-full text-sm">
+                <tbody>
+                  {sec.items.map((it, i) => (
+                    <tr key={i} className="border-t border-border">
+                      <td className="p-3">{it.label}</td>
+                      <td className="p-3 text-right w-40 font-semibold">{it.answer}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="card-elevated overflow-hidden">
           <table className="w-full text-sm">
@@ -176,7 +213,16 @@ function ViewModeration() {
       {showScore && (
         <div className="card-elevated p-6 flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            {t("moderation.total")}: <span className="text-foreground font-semibold">{Number(sub.total_score)} / {Number(sub.max_score)}</span>
+            {tpl.mode === "stats" ? (
+              t("pmItems.grade_average")
+            ) : (
+              <>
+                {t("moderation.total")}:{" "}
+                <span className="text-foreground font-semibold">
+                  {Number(sub.total_score)} / {Number(sub.max_score)}
+                </span>
+              </>
+            )}
           </div>
           <div className={`rounded-md text-white px-4 py-2 font-bold text-lg ${color}`}>{pct.toFixed(1)}%</div>
         </div>
@@ -190,7 +236,15 @@ function ViewModeration() {
       )}
       {sub.general_comments && (
         <div className="card-elevated p-6">
-          <div className="font-semibold mb-2">{learnersField ? t("moderation.otherComments") : isChecklist ? t("moderation.comments") : t("moderation.generalComments")}</div>
+          <div className="font-semibold mb-2">
+            {learnersField
+              ? t("moderation.otherComments")
+              : tpl.mode === "stats"
+                ? t(tpl.notesLabelKey)
+                : isChecklist
+                  ? t("moderation.comments")
+                  : t("moderation.generalComments")}
+          </div>
           <p className="text-sm whitespace-pre-wrap text-muted-foreground">{sub.general_comments}</p>
         </div>
       )}

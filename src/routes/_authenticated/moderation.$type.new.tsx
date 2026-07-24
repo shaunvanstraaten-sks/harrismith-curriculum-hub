@@ -60,6 +60,7 @@ function NewModeration() {
     () => Object.fromEntries(scoredItems.map((i) => [i.key, { score: 0, comment: "" }])),
   );
   const [answers, setAnswers] = useState<Record<string, Compliance>>({});
+  const [stats, setStats] = useState<Record<string, string>>({});
 
   const { data: grades } = useQuery({
     queryKey: ["grades"],
@@ -107,7 +108,27 @@ function NewModeration() {
     let rowMax = 0;
     const rowTemplates: Array<{ item_key: string; item_label: string; score: number; max_score: number; comment: string }> = [];
 
-    if (tpl.mode === "scored") {
+    if (tpl.mode === "stats") {
+      const summary = Number(stats[tpl.summaryKey] ?? "");
+      if (submit && !Number.isFinite(summary)) {
+        toast.error("Please enter the grade average before submitting.");
+        return;
+      }
+      tpl.fields.forEach((f) => {
+        const raw = Number(stats[f.key] ?? "");
+        const val = Number.isFinite(raw) ? raw : 0;
+        rowTemplates.push({
+          item_key: f.key,
+          item_label: t(f.labelKey),
+          score: val,
+          max_score: f.kind === "percent" ? 100 : 0,
+          comment: "",
+        });
+      });
+      // The grade average is the headline figure for Post-Moderation.
+      rowTotal = Number.isFinite(summary) ? summary : 0;
+      rowMax = 100;
+    } else if (tpl.mode === "scored") {
       scoredItems.forEach((it) => {
         const sc = scores[it.key]?.score ?? 0;
         rowTotal += sc;
@@ -216,7 +237,35 @@ function NewModeration() {
         {tpl.metaFields.map((f) => renderMeta(f))}
       </section>
 
-      {tpl.mode === "scored" ? (
+      {tpl.mode === "stats" ? (
+        <section className="card-elevated p-6 space-y-6">
+          {(["count", "percent"] as const).map((kind) => (
+            <div key={kind} className="space-y-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
+                {t(kind === "count" ? "pmSections.counts" : "pmSections.averages")}
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                {tpl.fields
+                  .filter((f) => f.kind === kind)
+                  .map((f) => (
+                    <label key={f.key} className="block">
+                      <span className="text-sm font-medium">{t(f.labelKey)}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={kind === "percent" ? 100 : undefined}
+                        step={kind === "percent" ? 0.1 : 1}
+                        value={stats[f.key] ?? ""}
+                        onChange={(e) => setStats({ ...stats, [f.key]: e.target.value })}
+                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      />
+                    </label>
+                  ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      ) : tpl.mode === "scored" ? (
         <section className="card-elevated p-6 space-y-4">
           <h2 className="font-semibold text-lg">{t("moderation.checklist")}</h2>
           {scoredItems.map((it) => (
@@ -275,7 +324,13 @@ function NewModeration() {
         )}
         <label className="block">
           <span className="text-sm font-medium">
-            {learnersField ? t("moderation.otherComments") : isChecklist ? t("moderation.comments") : t("moderation.generalComments")}
+            {learnersField
+              ? t("moderation.otherComments")
+              : tpl.mode === "stats"
+                ? t(tpl.notesLabelKey)
+                : isChecklist
+                  ? t("moderation.comments")
+                  : t("moderation.generalComments")}
           </span>
           <textarea
             value={state.general_comments}
@@ -302,6 +357,11 @@ function NewModeration() {
               {t("moderation.total")}: <span className="font-semibold text-foreground">{total} / {totalMax}</span>
             </div>
             <div className="text-2xl font-bold">{percentage.toFixed(1)}%</div>
+          </div>
+        ) : tpl.mode === "stats" ? (
+          <div className="text-sm">
+            <div className="text-muted-foreground">{t("pmItems.grade_average")}</div>
+            <div className="text-2xl font-bold">{(Number(stats[tpl.summaryKey] ?? "") || 0).toFixed(1)}%</div>
           </div>
         ) : tpl.showScore ? (
           <div className="text-sm">

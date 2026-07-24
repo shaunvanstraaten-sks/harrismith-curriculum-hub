@@ -89,7 +89,22 @@ export interface ChecklistTemplate extends BaseTemplate {
   learnersField?: boolean;
   sections: ChecklistSection[];
 }
-export type Template = ScoredTemplate | ChecklistTemplate;
+
+/** A numeric statistic captured on a form (Post-Moderation). */
+export interface StatField {
+  key: string;
+  labelKey: string;
+  kind: "count" | "percent";
+}
+export interface StatsTemplate extends BaseTemplate {
+  mode: "stats";
+  fields: StatField[];
+  /** Field whose value becomes the headline percentage + status colour. */
+  summaryKey: string;
+  notesLabelKey: string;
+}
+
+export type Template = ScoredTemplate | ChecklistTemplate | StatsTemplate;
 
 // ---- Pre-Moderation (checklist, no score) ----
 const PRE_MODERATION_SECTIONS: ChecklistSection[] = [
@@ -210,16 +225,25 @@ export const BOOK_CONTROL_TEMPLATE: ChecklistTemplate = {
   sections: BOOK_CONTROL_SECTIONS,
 };
 
-// ---- Post-Moderation (scored placeholder until its form is provided) ----
-export const POST_MODERATION_TEMPLATE: ScoredTemplate = {
-  mode: "scored",
-  metaFields: ["academic_year", "quarter", "cycle", "weeks", "moderation_date", "grade", "subject", "teacher"],
-  items: [
-    { key: "atp_coverage", labelKey: "items.atp_coverage", maxScore: 5 },
-    { key: "assessment_quality", labelKey: "items.assessment_quality", maxScore: 5 },
-    { key: "learner_books", labelKey: "items.learner_books", maxScore: 5 },
-    { key: "evidence", labelKey: "items.evidence", maxScore: 5 },
-    { key: "teacher_file", labelKey: "items.teacher_file", maxScore: 5 },
+// ---- Post-Moderation (statistics — "Post - Moderation (Vakhoofde)") ----
+// Counts are stored with max_score 0 (excluded from any percentage maths);
+// percentages with max_score 100. The grade average drives the headline %.
+export const POST_MODERATION_TEMPLATE: StatsTemplate = {
+  mode: "stats",
+  teacherLabelKey: "moderation.examiner",
+  metaFields: ["moderation_date", "term", "subject", "grade", "type_of_assessment", "teacher"],
+  summaryKey: "grade_average",
+  notesLabelKey: "moderation.postSample",
+  fields: [
+    { key: "learners_wrote", labelKey: "pmItems.learners_wrote", kind: "count" },
+    { key: "learners_absent", labelKey: "pmItems.learners_absent", kind: "count" },
+    { key: "learners_passed", labelKey: "pmItems.learners_passed", kind: "count" },
+    { key: "learners_failed", labelKey: "pmItems.learners_failed", kind: "count" },
+    { key: "grade_average", labelKey: "pmItems.grade_average", kind: "percent" },
+    { key: "class_a", labelKey: "pmItems.class_a", kind: "percent" },
+    { key: "class_b", labelKey: "pmItems.class_b", kind: "percent" },
+    { key: "class_ea", labelKey: "pmItems.class_ea", kind: "percent" },
+    { key: "class_eb", labelKey: "pmItems.class_eb", kind: "percent" },
   ],
 };
 

@@ -1,8 +1,9 @@
 import jsPDF from "jspdf";
 
 export interface PdfSubmission {
-  mode?: "scored" | "checklist";
+  mode?: "scored" | "checklist" | "stats";
   showPercentage?: boolean;
+  summaryLabel?: string;
   title: string;
   teacherName: string;
   teacherLabel?: string;
@@ -66,7 +67,7 @@ export async function generateModerationPdf(s: PdfSubmission) {
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  const isChecklist = s.mode === "checklist";
+  const isChecklist = s.mode === "checklist" || s.mode === "stats";
   const meta: Array<[string, string]> = [
     [s.teacherLabel ?? (isChecklist ? "Teacher (Examiner)" : "Teacher"), s.teacherName],
     ["Grade", s.grade],
@@ -124,7 +125,7 @@ export async function generateModerationPdf(s: PdfSubmission) {
       y += 16;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text(`Compliance: ${s.totalScore} / ${s.maxScore}    ${s.percentage.toFixed(1)}%`, 40, y);
+      doc.text(`${s.summaryLabel ?? "Compliance"}: ${s.percentage.toFixed(1)}%`, 40, y);
       y += 20;
     }
   } else {
