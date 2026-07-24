@@ -27,8 +27,7 @@ function DashboardPage() {
       const { data, error } = await supabase
         .from("moderation_submissions")
         .select("id, moderation_type, percentage, status, moderation_date, teacher_id")
-        .order("moderation_date", { ascending: false })
-        .limit(50);
+        .order("moderation_date", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
@@ -53,17 +52,12 @@ function DashboardPage() {
     },
   });
 
-  const { data: staffCount } = useQuery({
-    queryKey: ["staff-count"],
-    enabled: isStaff,
-    queryFn: async () => {
-      const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true });
-      return count ?? 0;
-    },
-  });
-
   const submitted = (submissions ?? []).filter((s) => s.status === "submitted");
   const countOf = (type: string) => submitted.filter((s) => s.moderation_type === type).length;
+
+  // Teachers the viewer can actually see, derived from scoped records rather
+  // than a school-wide profiles count.
+  const teacherCount = new Set(submitted.map((s) => s.teacher_id)).size;
 
   // Pre-Moderation is a checklist with no meaningful percentage, so it must not
   // drag the averages around. Only scored types count towards these figures.
@@ -121,8 +115,9 @@ function DashboardPage() {
           <KpiCard
             icon={<Users size={20} />}
             label={t("dashboard.teachers")}
-            value={staffCount === undefined ? "—" : String(staffCount)}
-            to="/admin/users"
+            value={String(teacherCount)}
+            hint={t("dashboard.teachersHint")}
+            to="/teachers"
           />
         </section>
       )}

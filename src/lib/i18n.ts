@@ -65,6 +65,14 @@ const en = {
     noneYet: "Nothing yet.",
     below85: "Below 85%",
     scoredOnly: "Scored moderations only",
+    teachersHint: "With moderations in your scope",
+  },
+  teachers: {
+    title: "Teachers",
+    intro:
+      "Teachers with submitted moderations you have access to, with their counts and average score. Averages exclude Pre-Moderation, which is a checklist with no percentage.",
+    empty: "No submitted moderations yet.",
+    last: "Last moderation",
   },
   history: {
     title: "History",
@@ -307,6 +315,14 @@ const af: typeof en = {
     noneYet: "Nog niks nie.",
     below85: "Onder 85%",
     scoredOnly: "Slegs gepunte modererings",
+    teachersHint: "Met modererings binne jou bereik",
+  },
+  teachers: {
+    title: "Onderwysers",
+    intro:
+      "Onderwysers met ingediende modererings waartoe jy toegang het, met tellings en gemiddelde punt. Gemiddeldes sluit Pre-Moderasie uit, wat 'n kontrolelys sonder persentasie is.",
+    empty: "Nog geen ingediende modererings nie.",
+    last: "Laaste moderering",
   },
   history: {
     title: "Geskiedenis",
