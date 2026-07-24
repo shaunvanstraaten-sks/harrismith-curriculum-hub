@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, hasAnyRole, type AppRole } from "@/hooks/use-auth";
+import { X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   component: AdminUsers,
@@ -13,6 +15,10 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
 });
 
 const ROLE_OPTIONS: AppRole[] = ["administrator", "principal", "hod", "head_of_subject", "teacher"];
+/** Roles that are meaningfully limited to a grade. Admin/Principal are school-wide. */
+const SCOPABLE: AppRole[] = ["hod", "head_of_subject", "teacher"];
+
+type Assignment = { role: AppRole; grade_id: string | null };
 
 function AdminUsers() {
   const { t } = useTranslation();
@@ -20,23 +26,31 @@ function AdminUsers() {
   const qc = useQueryClient();
   const isAdmin = hasAnyRole(roles, ["administrator"]);
 
+  const { data: grades } = useQuery({
+    queryKey: ["grades"],
+    enabled: isAdmin,
+    queryFn: async () => (await supabase.from("grades").select("id, name").order("sort_order")).data ?? [],
+  });
+
   const { data } = useQuery({
     queryKey: ["all-users"],
     enabled: isAdmin,
     queryFn: async () => {
       const [{ data: profiles }, { data: userRoles }] = await Promise.all([
         supabase.from("profiles").select("id, full_name, username, email, is_approved").order("full_name"),
-        supabase.from("user_roles").select("user_id, role"),
+        supabase.from("user_roles").select("user_id, role, grade_id"),
       ]);
-      const rolesByUser: Record<string, AppRole[]> = {};
+      const byUser: Record<string, Assignment[]> = {};
       (userRoles ?? []).forEach((r) => {
-        rolesByUser[r.user_id] = [...(rolesByUser[r.user_id] ?? []), r.role as AppRole];
+        byUser[r.user_id] = [...(byUser[r.user_id] ?? []), { role: r.role as AppRole, grade_id: r.grade_id }];
       });
-      return (profiles ?? []).map((p) => ({ ...p, roles: rolesByUser[p.id] ?? [] }));
+      return (profiles ?? []).map((p) => ({ ...p, assignments: byUser[p.id] ?? [] }));
     },
   });
 
   if (!isAdmin) return <div className="text-muted-foreground">Access denied.</div>;
+
+  const gradeName = (id: string | null) => (id ? (grades ?? []).find((g) => g.id === id)?.name ?? "?" : "All grades");
 
   const toggleApproved = async (id: string, current: boolean) => {
     const { error } = await supabase.from("profiles").update({ is_approved: !current }).eq("id", id);
@@ -47,74 +61,79 @@ function AdminUsers() {
     }
   };
 
-  // Roles are additive: a user may hold several (e.g. HOD *and* Head of Subject).
-  // Note that "teacher" access is identity-based (teacher_id = auth.uid()), so
-  // every user keeps their own dashboard/history regardless of which roles they hold.
-  const toggleRole = async (userId: string, role: AppRole, has: boolean) => {
-    const { error } = has
-      ? await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role)
-      : await supabase.from("user_roles").insert({ user_id: userId, role });
-    if (error) {
-      toast.error(error.message);
-      return;
+  const addRole = async (userId: string, role: AppRole, gradeId: string | null) => {
+    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role, grade_id: gradeId });
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Role added");
+      qc.invalidateQueries({ queryKey: ["all-users"] });
     }
-    toast.success("Roles updated");
-    qc.invalidateQueries({ queryKey: ["all-users"] });
+  };
+
+  const removeRole = async (userId: string, role: AppRole, gradeId: string | null) => {
+    const base = supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
+    const { error } = await (gradeId === null ? base.is("grade_id", null) : base.eq("grade_id", gradeId));
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Role removed");
+      qc.invalidateQueries({ queryKey: ["all-users"] });
+    }
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{t("nav.users")}</h1>
-        <p className="text-sm text-muted-foreground">
-          Approve new registrations and assign roles. Click a role to add or remove it — a user can hold
-          several (e.g. HOD and Head of Subject). Everyone keeps teacher-level access to their own records
-          regardless of the roles assigned.
+        <p className="text-sm text-muted-foreground max-w-3xl">
+          Approve new registrations and assign roles. A user can hold several roles (e.g. HOD and Head of
+          Subject). Roles for HOD, Head of Subject and Teacher can be limited to a grade — a Grade 4 HOD
+          sees only Grade 4 records and statistics. Administrator and Principal are always school-wide.
+          Everyone keeps access to their own records regardless of the roles assigned.
         </p>
       </div>
 
-      <div className="card-elevated overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="card-elevated overflow-x-auto">
+        <table className="w-full text-sm min-w-[900px]">
           <thead className="bg-muted/50 text-left">
             <tr>
               <th className="p-3">Name</th>
               <th className="p-3">Email</th>
-              <th className="p-3">{t("common.role")}</th>
+              <th className="p-3">Roles</th>
               <th className="p-3">Status</th>
               <th className="p-3"></th>
             </tr>
           </thead>
           <tbody>
             {(data ?? []).map((u) => (
-              <tr key={u.id} className="border-t border-border">
+              <tr key={u.id} className="border-t border-border align-top">
                 <td className="p-3 font-medium">{u.full_name || u.username || "—"}</td>
                 <td className="p-3 text-muted-foreground">{u.email}</td>
                 <td className="p-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    {ROLE_OPTIONS.map((r) => {
-                      const has = u.roles.includes(r);
-                      return (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {u.assignments.length === 0 && <span className="text-xs text-muted-foreground">No roles</span>}
+                    {u.assignments.map((a) => (
+                      <span
+                        key={`${a.role}:${a.grade_id ?? "all"}`}
+                        className="inline-flex items-center gap-1 rounded-md border border-primary bg-primary/10 px-2 py-0.5 text-xs font-medium"
+                      >
+                        {t(`roles.${a.role}`)}
+                        <span className="text-muted-foreground">· {gradeName(a.grade_id)}</span>
                         <button
-                          key={r}
                           type="button"
-                          onClick={() => toggleRole(u.id, r, has)}
-                          className={`rounded-md border px-2 py-0.5 text-xs font-medium transition ${
-                            has
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "border-input bg-background text-muted-foreground hover:bg-accent"
-                          }`}
+                          onClick={() => removeRole(u.id, a.role, a.grade_id)}
+                          className="ml-0.5 rounded hover:bg-destructive/20"
+                          aria-label="Remove role"
                         >
-                          {t(`roles.${r}`)}
+                          <X size={12} />
                         </button>
-                      );
-                    })}
+                      </span>
+                    ))}
                   </div>
+                  <RoleAdder grades={grades ?? []} onAdd={(role, gradeId) => addRole(u.id, role, gradeId)} t={t} />
                 </td>
                 <td className="p-3">
                   <span
-                    className={`rounded px-2 py-0.5 text-xs text-white ${
-                      u.is_approved ? "bg-status-green" : "bg-status-orange"
-                    }`}
+                    className={`rounded px-2 py-0.5 text-xs text-white ${u.is_approved ? "bg-status-green" : "bg-status-orange"}`}
                   >
                     {u.is_approved ? t("common.approved") : t("common.pending")}
                   </span>
@@ -132,6 +151,57 @@ function AdminUsers() {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function RoleAdder({
+  grades,
+  onAdd,
+  t,
+}: {
+  grades: { id: string; name: string }[];
+  onAdd: (role: AppRole, gradeId: string | null) => void;
+  t: (k: string) => string;
+}) {
+  const [role, setRole] = useState<AppRole>("teacher");
+  const [gradeId, setGradeId] = useState<string>("");
+  const scopable = SCOPABLE.includes(role);
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <select
+        value={role}
+        onChange={(e) => setRole(e.target.value as AppRole)}
+        className="rounded-md border border-input bg-background px-2 py-1 text-xs"
+      >
+        {ROLE_OPTIONS.map((r) => (
+          <option key={r} value={r}>
+            {t(`roles.${r}`)}
+          </option>
+        ))}
+      </select>
+      <select
+        value={scopable ? gradeId : ""}
+        disabled={!scopable}
+        onChange={(e) => setGradeId(e.target.value)}
+        className="rounded-md border border-input bg-background px-2 py-1 text-xs disabled:opacity-50"
+        title={scopable ? "Limit this role to a grade" : "Administrator and Principal are school-wide"}
+      >
+        <option value="">All grades</option>
+        {grades.map((g) => (
+          <option key={g.id} value={g.id}>
+            {g.name}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        onClick={() => onAdd(role, scopable && gradeId ? gradeId : null)}
+        className="rounded-md border border-input px-2 py-1 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+      >
+        + Add
+      </button>
     </div>
   );
 }

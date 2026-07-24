@@ -267,3 +267,7 @@ GRANT EXECUTE ON FUNCTION public.is_staff(uuid) TO authenticated;
 ALTER TABLE public.moderation_submissions
   ADD COLUMN IF NOT EXISTS type_of_moderation TEXT,
   ADD COLUMN IF NOT EXISTS type_of_assessment TEXT;
+
+-- ============================================================
+-- FROM: 20260724120000_grade_scoped_roles.sql  (see migration file)
+-- ============================================================
