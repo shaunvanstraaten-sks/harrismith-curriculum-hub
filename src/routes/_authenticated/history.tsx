@@ -2,13 +2,28 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, hasAnyRole } from "@/hooks/use-auth";
 import type { Database } from "@/integrations/supabase/types";
 
 type ModType = Database["public"]["Enums"]["moderation_type"];
 
+// Filters can be pre-applied from the URL so dashboard KPI cards can deep-link
+// straight into the matching slice of history.
+const searchSchema = z.object({
+  type: z.string().optional(),
+  quarter: z.string().optional(),
+  grade_id: z.string().optional(),
+  subject_id: z.string().optional(),
+  teacher_id: z.string().optional(),
+  status: z.string().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+});
+
 export const Route = createFileRoute("/_authenticated/history")({
+  validateSearch: searchSchema,
   component: HistoryPage,
   head: () => ({
     meta: [{ title: "History — Harrismith Primary" }, { name: "robots", content: "noindex" }],
@@ -30,7 +45,8 @@ function HistoryPage() {
   const { t } = useTranslation();
   const { roles } = useAuth();
   const isStaff = hasAnyRole(roles, ["administrator", "principal", "hod", "head_of_subject"]);
-  const [f, setF] = useState({ ...EMPTY });
+  const search = Route.useSearch();
+  const [f, setF] = useState({ ...EMPTY, ...search });
 
   const { data: grades } = useQuery({
     queryKey: ["grades"],

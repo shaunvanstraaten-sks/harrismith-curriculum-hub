@@ -18,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function DashboardPage() {
   const { t } = useTranslation();
   const { user, roles, fullName } = useAuth();
+  const isStaff = hasAnyRole(roles, ["administrator", "principal", "hod", "head_of_subject"]);
 
   const { data: submissions } = useQuery({
     queryKey: ["dashboard-submissions", user?.id],
@@ -52,13 +53,23 @@ function DashboardPage() {
     },
   });
 
-  const isStaff = hasAnyRole(roles, ["administrator", "principal", "hod", "head_of_subject"]);
+  const { data: staffCount } = useQuery({
+    queryKey: ["staff-count"],
+    enabled: isStaff,
+    queryFn: async () => {
+      const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true });
+      return count ?? 0;
+    },
+  });
+
   const submitted = (submissions ?? []).filter((s) => s.status === "submitted");
-  const avg =
-    submitted.length > 0
-      ? submitted.reduce((a, b) => a + Number(b.percentage), 0) / submitted.length
-      : 0;
-  const below85 = submitted.filter((s) => Number(s.percentage) < 85).length;
+  const countOf = (type: string) => submitted.filter((s) => s.moderation_type === type).length;
+
+  // Pre-Moderation is a checklist with no meaningful percentage, so it must not
+  // drag the averages around. Only scored types count towards these figures.
+  const scored = submitted.filter((s) => s.moderation_type !== "pre_moderation");
+  const avg = scored.length > 0 ? scored.reduce((a, b) => a + Number(b.percentage), 0) / scored.length : 0;
+  const below85 = scored.filter((s) => Number(s.percentage) < 85).length;
 
   return (
     <div className="space-y-8">
@@ -67,13 +78,52 @@ function DashboardPage() {
         <h1 className="text-3xl font-bold">{fullName || user?.email}</h1>
       </div>
 
-      {/* KPI cards for staff */}
+      {/* KPI cards for staff — every card drills through to the matching History view */}
       {isStaff && (
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiCard icon={<ClipboardList size={20} />} label={t("dashboard.latest")} value={String(submitted.length)} />
-          <KpiCard icon={<TrendingUp size={20} />} label={t("dashboard.avgScore")} value={`${avg.toFixed(1)}%`} />
-          <KpiCard icon={<AlertCircle size={20} />} label="Below 85%" value={String(below85)} />
-          <KpiCard icon={<Users size={20} />} label={t("dashboard.teachers")} value="—" />
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <KpiCard
+            icon={<ClipboardList size={20} />}
+            label={t("dashboard.preModeration")}
+            value={String(countOf("pre_moderation"))}
+            to="/history"
+            search={{ type: "pre_moderation", status: "submitted" }}
+          />
+          <KpiCard
+            icon={<ClipboardCheck size={20} />}
+            label={t("dashboard.postModeration")}
+            value={String(countOf("post_moderation"))}
+            to="/history"
+            search={{ type: "post_moderation", status: "submitted" }}
+          />
+          <KpiCard
+            icon={<BookOpen size={20} />}
+            label={t("dashboard.bookControl")}
+            value={String(countOf("book_control"))}
+            to="/history"
+            search={{ type: "book_control", status: "submitted" }}
+          />
+          <KpiCard
+            icon={<TrendingUp size={20} />}
+            label={t("dashboard.avgScore")}
+            value={scored.length ? `${avg.toFixed(1)}%` : "—"}
+            hint={t("dashboard.scoredOnly")}
+            to="/history"
+            search={{ status: "submitted" }}
+          />
+          <KpiCard
+            icon={<AlertCircle size={20} />}
+            label={t("dashboard.below85")}
+            value={String(below85)}
+            hint={t("dashboard.scoredOnly")}
+            to="/history"
+            search={{ status: "submitted" }}
+          />
+          <KpiCard
+            icon={<Users size={20} />}
+            label={t("dashboard.teachers")}
+            value={staffCount === undefined ? "—" : String(staffCount)}
+            to="/admin/users"
+          />
         </section>
       )}
 
@@ -165,7 +215,41 @@ function completedLabelKey(type: string) {
   return "dashboard.completedPre";
 }
 
-function KpiCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function KpiCard({
+  icon,
+  label,
+  value,
+  hint,
+  to,
+  search,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  hint?: string;
+  to?: string;
+  search?: Record<string, string>;
+}) {
+  const body = <KpiBody icon={icon} label={label} value={value} hint={hint} />;
+  if (!to) return body;
+  return (
+    <Link to={to} search={search} className="block transition hover:shadow-lg hover:-translate-y-0.5">
+      {body}
+    </Link>
+  );
+}
+
+function KpiBody({
+  icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  hint?: string;
+}) {
   return (
     <div className="card-elevated p-5">
       <div className="flex items-center justify-between text-muted-foreground text-sm">
@@ -173,6 +257,7 @@ function KpiCard({ icon, label, value }: { icon: React.ReactNode; label: string;
         <span className="text-brand-orange">{icon}</span>
       </div>
       <div className="mt-2 text-3xl font-bold">{value}</div>
+      {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
     </div>
   );
 }

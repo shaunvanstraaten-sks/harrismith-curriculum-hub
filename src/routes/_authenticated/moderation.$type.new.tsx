@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -37,6 +37,7 @@ function NewModeration() {
   const cfg = TYPE_MAP[type];
   const navigate = useNavigate();
   const { user } = useAuth();
+  const qc = useQueryClient();
   const tpl = useMemo(() => (cfg ? templateFor(cfg.db) : null), [cfg]);
   const scoredItems = tpl?.mode === "scored" ? tpl.items : [];
   const checklist = tpl?.mode === "checklist" ? checklistItemsFlat(tpl) : [];
@@ -187,6 +188,10 @@ function NewModeration() {
       toast.error(sErr.message);
       return;
     }
+    // Refresh the dashboard counts / completed lists / history straight away.
+    qc.invalidateQueries({ queryKey: ["dashboard-submissions"] });
+    qc.invalidateQueries({ queryKey: ["my-completed"] });
+    qc.invalidateQueries({ queryKey: ["history"] });
     toast.success(submit ? "Submitted" : "Saved as draft");
     navigate({ to: "/moderation/view/$id", params: { id: sub.id } });
   };

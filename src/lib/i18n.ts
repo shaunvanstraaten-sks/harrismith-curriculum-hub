@@ -63,6 +63,8 @@ const en = {
     completedPost: "Completed Post-Moderation",
     completedBook: "Completed Book Control",
     noneYet: "Nothing yet.",
+    below85: "Below 85%",
+    scoredOnly: "Scored moderations only",
   },
   history: {
     title: "History",
@@ -303,6 +305,8 @@ const af: typeof en = {
     completedPost: "Afgehandelde Post-Moderasie",
     completedBook: "Afgehandelde Boek Kontrole",
     noneYet: "Nog niks nie.",
+    below85: "Onder 85%",
+    scoredOnly: "Slegs gepunte modererings",
   },
   history: {
     title: "Geskiedenis",
