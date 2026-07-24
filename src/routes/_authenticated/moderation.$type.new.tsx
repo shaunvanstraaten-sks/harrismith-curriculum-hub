@@ -208,8 +208,8 @@ function NewModeration() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <div className="text-sm text-muted-foreground">{t(cfg.labelKey)}</div>
-        <h1 className="text-3xl font-bold">{t("moderation.new")}</h1>
+        <div className="text-sm text-muted-foreground">{t("nav.moderation")}</div>
+        <h1 className="text-3xl font-bold">{t(cfg.labelKey)}</h1>
       </div>
 
       <section className="card-elevated p-6 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
@@ -218,7 +218,7 @@ function NewModeration() {
 
       {tpl.mode === "scored" ? (
         <section className="card-elevated p-6 space-y-4">
-          <h2 className="font-semibold text-lg">{t("moderation.new")}</h2>
+          <h2 className="font-semibold text-lg">{t("moderation.checklist")}</h2>
           {scoredItems.map((it) => (
             <div key={it.key} className="grid gap-2 md:grid-cols-[1fr_120px] items-start border-b border-border pb-3 last:border-b-0">
               <div>

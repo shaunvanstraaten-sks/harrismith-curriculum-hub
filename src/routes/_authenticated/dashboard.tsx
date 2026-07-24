@@ -63,21 +63,21 @@ function DashboardPage() {
         <h2 className="text-xl font-semibold mb-4">{t("dashboard.curriculumModeration")}</h2>
         <div className="grid gap-4 md:grid-cols-3">
           <ModerationCard
-            to="/moderation/pre"
+            to="/moderation/pre/new"
             title={t("dashboard.preModeration")}
             desc={t("dashboard.preModerationDesc")}
             icon={<ClipboardList size={28} />}
             color="bg-brand-navy text-white"
           />
           <ModerationCard
-            to="/moderation/post"
+            to="/moderation/post/new"
             title={t("dashboard.postModeration")}
             desc={t("dashboard.postModerationDesc")}
             icon={<ClipboardCheck size={28} />}
             color="bg-brand-green text-white"
           />
           <ModerationCard
-            to="/moderation/book"
+            to="/moderation/book/new"
             title={t("dashboard.bookControl")}
             desc={t("dashboard.bookControlDesc")}
             icon={<BookOpen size={28} />}
