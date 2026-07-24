@@ -47,24 +47,30 @@ function AdminUsers() {
     }
   };
 
-  const setRole = async (userId: string, role: AppRole, existing: AppRole[]) => {
-    // Replace with a single role (simple UX for now)
-    if (existing.length > 0) {
-      await supabase.from("user_roles").delete().eq("user_id", userId);
+  // Roles are additive: a user may hold several (e.g. HOD *and* Head of Subject).
+  // Note that "teacher" access is identity-based (teacher_id = auth.uid()), so
+  // every user keeps their own dashboard/history regardless of which roles they hold.
+  const toggleRole = async (userId: string, role: AppRole, has: boolean) => {
+    const { error } = has
+      ? await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role)
+      : await supabase.from("user_roles").insert({ user_id: userId, role });
+    if (error) {
+      toast.error(error.message);
+      return;
     }
-    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Role updated");
-      qc.invalidateQueries({ queryKey: ["all-users"] });
-    }
+    toast.success("Roles updated");
+    qc.invalidateQueries({ queryKey: ["all-users"] });
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{t("nav.users")}</h1>
-        <p className="text-sm text-muted-foreground">Approve new registrations and assign roles.</p>
+        <p className="text-sm text-muted-foreground">
+          Approve new registrations and assign roles. Click a role to add or remove it — a user can hold
+          several (e.g. HOD and Head of Subject). Everyone keeps teacher-level access to their own records
+          regardless of the roles assigned.
+        </p>
       </div>
 
       <div className="card-elevated overflow-hidden">
@@ -84,17 +90,25 @@ function AdminUsers() {
                 <td className="p-3 font-medium">{u.full_name || u.username || "—"}</td>
                 <td className="p-3 text-muted-foreground">{u.email}</td>
                 <td className="p-3">
-                  <select
-                    value={u.roles[0] ?? "teacher"}
-                    onChange={(e) => setRole(u.id, e.target.value as AppRole, u.roles)}
-                    className="rounded-md border border-input bg-background px-2 py-1 text-sm"
-                  >
-                    {ROLE_OPTIONS.map((r) => (
-                      <option key={r} value={r}>
-                        {t(`roles.${r}`)}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ROLE_OPTIONS.map((r) => {
+                      const has = u.roles.includes(r);
+                      return (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => toggleRole(u.id, r, has)}
+                          className={`rounded-md border px-2 py-0.5 text-xs font-medium transition ${
+                            has
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "border-input bg-background text-muted-foreground hover:bg-accent"
+                          }`}
+                        >
+                          {t(`roles.${r}`)}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </td>
                 <td className="p-3">
                   <span
