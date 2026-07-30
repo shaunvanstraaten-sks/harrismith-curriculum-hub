@@ -47,6 +47,11 @@ function HistoryPage() {
   const isStaff = hasAnyRole(roles, ["administrator", "principal", "hod", "head_of_subject"]);
   const search = Route.useSearch();
   const [f, setF] = useState({ ...EMPTY, ...search });
+  // Analysis of Results has a stricter visibility rule than the other three
+  // types — only Principal/Administrator may look up other teachers' rows
+  // (hod/head_of_subject cannot, unlike the general "staff sees all" rule).
+  // This only gates the picker itself; RLS is the actual enforcement.
+  const canFilterByTeacher = f.type === "analysis_of_results" ? hasAnyRole(roles, ["principal", "administrator"]) : isStaff;
 
   const { data: grades } = useQuery({
     queryKey: ["grades"],
@@ -58,7 +63,7 @@ function HistoryPage() {
   });
   const { data: teachers } = useQuery({
     queryKey: ["teacher-profiles"],
-    enabled: isStaff,
+    enabled: canFilterByTeacher,
     queryFn: async () => (await supabase.from("profiles").select("id, full_name, email").order("full_name")).data ?? [],
   });
 
@@ -111,6 +116,7 @@ function HistoryPage() {
             <option value="pre_moderation">{t("dashboard.preModeration")}</option>
             <option value="post_moderation">{t("dashboard.postModeration")}</option>
             <option value="book_control">{t("dashboard.bookControl")}</option>
+            <option value="analysis_of_results">{t("dashboard.analysisOfResults")}</option>
           </select>
         </Field>
 
@@ -147,7 +153,7 @@ function HistoryPage() {
           </select>
         </Field>
 
-        {isStaff && (
+        {canFilterByTeacher && (
           <Field label={t("moderation.teacher")}>
             <select value={f.teacher_id} onChange={(e) => setF({ ...f, teacher_id: e.target.value })} className={inputCls}>
               <option value="">{t("history.all")}</option>
@@ -251,6 +257,7 @@ const inputCls = "mt-1 w-full rounded-md border border-input bg-background px-3 
 export function typeLabelKey(type: string) {
   if (type === "book_control") return "dashboard.bookControl";
   if (type === "post_moderation") return "dashboard.postModeration";
+  if (type === "analysis_of_results") return "dashboard.analysisOfResults";
   return "dashboard.preModeration";
 }
 

@@ -20,6 +20,7 @@ import { Route as AuthenticatedTeachersRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedModerationIndexRouteImport } from './routes/_authenticated/moderation.index'
 import { Route as AuthenticatedModerationTypeNewRouteImport } from './routes/_authenticated/moderation.$type.new'
+import { Route as AuthenticatedModerationAnalysisNewRouteImport } from './routes/_authenticated/moderation.analysis.new'
 import { Route as AuthenticatedModerationViewIdRouteImport } from './routes/_authenticated/moderation.view.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -78,6 +79,12 @@ const AuthenticatedModerationTypeNewRoute =
     path: '/moderation/$type/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedModerationAnalysisNewRoute =
+  AuthenticatedModerationAnalysisNewRouteImport.update({
+    id: '/moderation/analysis/new',
+    path: '/moderation/analysis/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedModerationViewIdRoute =
   AuthenticatedModerationViewIdRouteImport.update({
     id: '/moderation/view/$id',
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/moderation/': typeof AuthenticatedModerationIndexRoute
   '/moderation/$type/new': typeof AuthenticatedModerationTypeNewRoute
+  '/moderation/analysis/new': typeof AuthenticatedModerationAnalysisNewRoute
   '/moderation/view/$id': typeof AuthenticatedModerationViewIdRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +117,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/moderation': typeof AuthenticatedModerationIndexRoute
   '/moderation/$type/new': typeof AuthenticatedModerationTypeNewRoute
+  '/moderation/analysis/new': typeof AuthenticatedModerationAnalysisNewRoute
   '/moderation/view/$id': typeof AuthenticatedModerationViewIdRoute
 }
 export interface FileRoutesById {
@@ -124,6 +133,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/moderation/': typeof AuthenticatedModerationIndexRoute
   '/_authenticated/moderation/$type/new': typeof AuthenticatedModerationTypeNewRoute
+  '/_authenticated/moderation/analysis/new': typeof AuthenticatedModerationAnalysisNewRoute
   '/_authenticated/moderation/view/$id': typeof AuthenticatedModerationViewIdRoute
 }
 export interface FileRouteTypes {
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/moderation/'
     | '/moderation/$type/new'
+    | '/moderation/analysis/new'
     | '/moderation/view/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/moderation'
     | '/moderation/$type/new'
+    | '/moderation/analysis/new'
     | '/moderation/view/$id'
   id:
     | '__root__'
@@ -166,6 +178,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/users'
     | '/_authenticated/moderation/'
     | '/_authenticated/moderation/$type/new'
+    | '/_authenticated/moderation/analysis/new'
     | '/_authenticated/moderation/view/$id'
   fileRoutesById: FileRoutesById
 }
@@ -255,6 +268,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedModerationTypeNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/moderation/analysis/new': {
+      id: '/_authenticated/moderation/analysis/new'
+      path: '/moderation/analysis/new'
+      fullPath: '/moderation/analysis/new'
+      preLoaderRoute: typeof AuthenticatedModerationAnalysisNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/moderation/view/$id': {
       id: '/_authenticated/moderation/view/$id'
       path: '/moderation/view/$id'
@@ -273,6 +293,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedModerationIndexRoute: typeof AuthenticatedModerationIndexRoute
   AuthenticatedModerationTypeNewRoute: typeof AuthenticatedModerationTypeNewRoute
+  AuthenticatedModerationAnalysisNewRoute: typeof AuthenticatedModerationAnalysisNewRoute
   AuthenticatedModerationViewIdRoute: typeof AuthenticatedModerationViewIdRoute
 }
 
@@ -284,6 +305,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedModerationIndexRoute: AuthenticatedModerationIndexRoute,
   AuthenticatedModerationTypeNewRoute: AuthenticatedModerationTypeNewRoute,
+  AuthenticatedModerationAnalysisNewRoute:
+    AuthenticatedModerationAnalysisNewRoute,
   AuthenticatedModerationViewIdRoute: AuthenticatedModerationViewIdRoute,
 }
 

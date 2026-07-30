@@ -3,7 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { generateModerationPdf } from "@/lib/pdf";
-import { templateFor, scoreToCompliance, optionForCompliance, type Compliance } from "@/lib/moderation-templates";
+import {
+  templateFor,
+  scoreToCompliance,
+  optionForCompliance,
+  computeGridColumns,
+  type Compliance,
+  type GridRow,
+} from "@/lib/moderation-templates";
 import type { Database } from "@/integrations/supabase/types";
 import { Download } from "lucide-react";
 
@@ -32,16 +39,21 @@ function ViewModeration() {
         .single();
       if (error) throw error;
       const { data: scores } = await supabase.from("moderation_scores").select("*").eq("submission_id", id).order("sort_order");
-      return { sub, scores: scores ?? [] };
+      const { data: gridRows } =
+        sub.moderation_type === "analysis_of_results"
+          ? await supabase.from("analysis_of_results_students").select("*").eq("submission_id", id).order("row_number")
+          : { data: [] as never[] };
+      return { sub, scores: scores ?? [], gridRows: gridRows ?? [] };
     },
   });
 
   if (isLoading || !data) return <div className="text-muted-foreground">{t("common.loading")}</div>;
-  const { sub, scores } = data;
+  const { sub, scores, gridRows } = data;
   const modType = sub.moderation_type as ModType;
   const tpl = templateFor(modType);
   const isChecklist = tpl.mode === "checklist";
-  const showScore = tpl.mode === "scored" || tpl.mode === "stats" || (tpl.mode === "checklist" && tpl.showScore);
+  const isGrid = tpl.mode === "grid";
+  const showScore = tpl.mode === "scored" || tpl.mode === "stats" || isGrid || (tpl.mode === "checklist" && tpl.showScore);
   const learnersField = tpl.mode === "checklist" && tpl.learnersField;
   const anyS = sub as any;
 
@@ -88,14 +100,32 @@ function ViewModeration() {
         }))
       : [];
 
+  // Analysis of Results grid: column-wise footer totals/averages are derived
+  // here from the stored per-student rows, same helper the create form uses.
+  const anyGridRows = gridRows as unknown as Array<{
+    row_number: number;
+    student_name: string;
+    marks: number[];
+    row_total: number;
+    row_percentage: number;
+  }>;
+  const gridQuestionMax: (number | null)[] = isGrid ? (((sub as any).question_max_marks as (number | null)[]) ?? []) : [];
+  const gridColumnStats = isGrid
+    ? computeGridColumns(
+        anyGridRows.map((r): GridRow => ({ name: r.student_name, marks: r.marks })),
+        gridQuestionMax.length,
+      )
+    : { totals: [], averages: [] };
+
   const download = () =>
     generateModerationPdf({
       mode: tpl.mode,
       showPercentage: showScore,
       summaryLabel: tpl.mode === "stats" ? t("pmItems.grade_average") : undefined,
-      title: isChecklist
-        ? `${t(`dashboard.${modType === "book_control" ? "bookControl" : "preModeration"}`)} — ${t("moderation.term")} ${sub.quarter}`
-        : `${sub.moderation_type.replace("_", " ")} — Q${sub.quarter} C${sub.cycle}`,
+      title:
+        isChecklist || isGrid
+          ? `${isGrid ? t("dashboard.analysisOfResults") : t(`dashboard.${modType === "book_control" ? "bookControl" : "preModeration"}`)} — ${t("moderation.term")} ${sub.quarter}`
+          : `${sub.moderation_type.replace("_", " ")} — Q${sub.quarter} C${sub.cycle}`,
       teacherName,
       grade: gradeName,
       subject: subjectName,
@@ -118,6 +148,21 @@ function ViewModeration() {
       generalComments: sub.general_comments ?? undefined,
       recommendations: sub.recommendations ?? undefined,
       learnersLabel: learnersField ? t("moderation.learnersChecked") : undefined,
+      grid: isGrid
+        ? {
+            className: (sub as any).class_name ?? "",
+            term: sub.quarter,
+            questionMaxMarks: gridQuestionMax,
+            students: anyGridRows.map((r) => ({
+              name: r.student_name,
+              marks: r.marks,
+              total: Number(r.row_total),
+              percentage: Number(r.row_percentage),
+            })),
+            columnTotals: gridColumnStats.totals,
+            columnAverages: gridColumnStats.averages,
+          }
+        : undefined,
     });
 
   return (
@@ -126,7 +171,7 @@ function ViewModeration() {
         <div>
           <div className="text-sm text-muted-foreground capitalize">{sub.moderation_type.replace("_", " ")}</div>
           <h1 className="text-3xl font-bold">
-            {isChecklist ? `${t("moderation.term")} ${sub.quarter}` : `Q${sub.quarter} · C${sub.cycle} · ${sub.weeks}`}
+            {isChecklist || isGrid ? `${t("moderation.term")} ${sub.quarter}` : `Q${sub.quarter} · C${sub.cycle} · ${sub.weeks}`}
           </h1>
           <div className="text-sm text-muted-foreground mt-1">{sub.moderation_date} · {sub.academic_year}</div>
         </div>
@@ -142,8 +187,9 @@ function ViewModeration() {
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 text-sm card-elevated p-6">
         <Meta label={teacherLabel} value={teacherName} />
         <Meta label={t("moderation.grade")} value={gradeName} />
+        {isGrid && <Meta label={t("moderation.class")} value={(sub as any).class_name || "—"} />}
         <Meta label={t("moderation.subject")} value={subjectName} />
-        <Meta label={isChecklist ? t("moderation.moderator") : t("moderation.headOfSubject")} value={hosName} />
+        {!isGrid && <Meta label={isChecklist ? t("moderation.moderator") : t("moderation.headOfSubject")} value={hosName} />}
         {sub.type_of_moderation && <Meta label={t("moderation.typeOfModeration")} value={optLabel(sub.type_of_moderation)} />}
         {sub.type_of_assessment && <Meta label={t("moderation.typeOfAssessment")} value={optLabel(sub.type_of_assessment)} />}
         <Meta label={t("moderation.status")} value={sub.status} />
@@ -168,6 +214,65 @@ function ViewModeration() {
               </table>
             </div>
           ))}
+        </div>
+      ) : isGrid ? (
+        <div className="card-elevated p-4 overflow-x-auto">
+          <table className="w-full text-sm border-collapse min-w-[1100px]">
+            <thead>
+              <tr className="bg-muted/50">
+                <th className="p-2 text-left border border-border sticky left-0 bg-muted/50 min-w-[180px]">{t("analysis.studentName")}</th>
+                {gridQuestionMax.map((_, i) => (
+                  <th key={i} className="p-2 text-center border border-border min-w-[70px]">
+                    {t("analysis.question")}{i + 1}
+                  </th>
+                ))}
+                <th className="p-2 text-center border border-border min-w-[80px]">{t("moderation.total")}</th>
+                <th className="p-2 text-center border border-border min-w-[70px]">%</th>
+              </tr>
+              <tr className="bg-muted/30">
+                <th className="p-2 text-right text-xs font-normal text-muted-foreground border border-border sticky left-0 bg-muted/30">
+                  {t("analysis.outOf")}
+                </th>
+                {gridQuestionMax.map((v, i) => (
+                  <th key={i} className="p-2 text-center border border-border font-normal text-muted-foreground">
+                    {v ?? "—"}
+                  </th>
+                ))}
+                <th className="border border-border" colSpan={2} />
+              </tr>
+            </thead>
+            <tbody>
+              {anyGridRows.map((r) => (
+                <tr key={r.row_number} className="border-t border-border">
+                  <td className="p-2 border border-border sticky left-0 bg-background">{r.student_name}</td>
+                  {gridQuestionMax.map((_, i) => (
+                    <td key={i} className="p-2 text-center border border-border">
+                      {r.marks[i] ?? "—"}
+                    </td>
+                  ))}
+                  <td className="p-2 text-center border border-border font-medium">{Number(r.row_total)}</td>
+                  <td className="p-2 text-center border border-border font-medium">{Number(r.row_percentage).toFixed(1)}%</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="bg-muted/30 font-semibold">
+                <td className="p-2 border border-border sticky left-0 bg-muted/30">{t("analysis.totalRow")}</td>
+                {gridColumnStats.totals.map((v, i) => (
+                  <td key={i} className="p-2 text-center border border-border">{v || "—"}</td>
+                ))}
+                <td className="p-2 text-center border border-border">{Number(sub.total_score)}</td>
+                <td className="p-2 text-center border border-border">{Number(sub.percentage).toFixed(1)}%</td>
+              </tr>
+              <tr className="bg-muted/30 font-semibold">
+                <td className="p-2 border border-border sticky left-0 bg-muted/30">{t("analysis.averageRow")}</td>
+                {gridColumnStats.averages.map((v, i) => (
+                  <td key={i} className="p-2 text-center border border-border">{v ? v.toFixed(1) : "—"}</td>
+                ))}
+                <td className="border border-border" colSpan={2} />
+              </tr>
+            </tfoot>
+          </table>
         </div>
       ) : tpl.mode === "stats" ? (
         <div className="space-y-4">

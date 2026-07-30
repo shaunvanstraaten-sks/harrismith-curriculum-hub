@@ -299,7 +299,7 @@ function NewModeration() {
             </div>
           ))}
         </section>
-      ) : (
+      ) : tpl.mode === "checklist" ? (
         <section className="card-elevated p-6 space-y-6">
           <h2 className="font-semibold text-lg">{t("moderation.checklist")}</h2>
           {tpl.sections.map((sec) => (
@@ -314,7 +314,7 @@ function NewModeration() {
             </div>
           ))}
         </section>
-      )}
+      ) : null}
 
       <section className="card-elevated p-6 space-y-4">
         {learnersField && (
@@ -368,7 +368,7 @@ function NewModeration() {
             <div className="text-muted-foreground">{t("pmItems.grade_average")}</div>
             <div className="text-2xl font-bold">{(Number(stats[tpl.summaryKey] ?? "") || 0).toFixed(1)}%</div>
           </div>
-        ) : tpl.showScore ? (
+        ) : tpl.mode === "checklist" && tpl.showScore ? (
           <div className="text-sm">
             <div className="text-muted-foreground">{answeredCount} / {checklist.length} answered</div>
             <div className="text-2xl font-bold">{checklistPct.toFixed(1)}%</div>

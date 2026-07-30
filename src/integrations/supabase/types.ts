@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      analysis_of_results_students: {
+        Row: {
+          created_at: string
+          id: string
+          marks: (number | null)[]
+          row_number: number
+          row_percentage: number
+          row_total: number
+          student_name: string
+          submission_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          marks: (number | null)[]
+          row_number: number
+          row_percentage?: number
+          row_total?: number
+          student_name: string
+          submission_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          marks?: (number | null)[]
+          row_number?: number
+          row_percentage?: number
+          row_total?: number
+          student_name?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_of_results_students_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "moderation_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           created_at: string
@@ -94,18 +135,20 @@ export type Database = {
       moderation_submissions: {
         Row: {
           academic_year: number
+          class_name: string | null
           created_at: string
           created_by: string
           cycle: number
           general_comments: string | null
           grade_id: string | null
-          head_of_subject_id: string
+          head_of_subject_id: string | null
           id: string
           max_score: number
           moderation_date: string
           moderation_type: Database["public"]["Enums"]["moderation_type"]
           percentage: number
           quarter: number
+          question_max_marks: (number | null)[] | null
           recommendations: string | null
           status: Database["public"]["Enums"]["submission_status"]
           subject_id: string | null
@@ -119,18 +162,20 @@ export type Database = {
         }
         Insert: {
           academic_year: number
+          class_name?: string | null
           created_at?: string
           created_by: string
           cycle: number
           general_comments?: string | null
           grade_id?: string | null
-          head_of_subject_id: string
+          head_of_subject_id?: string | null
           id?: string
           max_score?: number
           moderation_date: string
           moderation_type: Database["public"]["Enums"]["moderation_type"]
           percentage?: number
           quarter: number
+          question_max_marks?: (number | null)[] | null
           recommendations?: string | null
           status?: Database["public"]["Enums"]["submission_status"]
           subject_id?: string | null
@@ -144,18 +189,20 @@ export type Database = {
         }
         Update: {
           academic_year?: number
+          class_name?: string | null
           created_at?: string
           created_by?: string
           cycle?: number
           general_comments?: string | null
           grade_id?: string | null
-          head_of_subject_id?: string
+          head_of_subject_id?: string | null
           id?: string
           max_score?: number
           moderation_date?: string
           moderation_type?: Database["public"]["Enums"]["moderation_type"]
           percentage?: number
           quarter?: number
+          question_max_marks?: (number | null)[] | null
           recommendations?: string | null
           status?: Database["public"]["Enums"]["submission_status"]
           subject_id?: string | null
@@ -303,6 +350,7 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_principal: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
@@ -311,7 +359,11 @@ export type Database = {
         | "hod"
         | "head_of_subject"
         | "teacher"
-      moderation_type: "pre_moderation" | "post_moderation" | "book_control"
+      moderation_type:
+        | "pre_moderation"
+        | "post_moderation"
+        | "book_control"
+        | "analysis_of_results"
       submission_status: "draft" | "submitted"
     }
     CompositeTypes: {
@@ -447,7 +499,12 @@ export const Constants = {
         "head_of_subject",
         "teacher",
       ],
-      moderation_type: ["pre_moderation", "post_moderation", "book_control"],
+      moderation_type: [
+        "pre_moderation",
+        "post_moderation",
+        "book_control",
+        "analysis_of_results",
+      ],
       submission_status: ["draft", "submitted"],
     },
   },

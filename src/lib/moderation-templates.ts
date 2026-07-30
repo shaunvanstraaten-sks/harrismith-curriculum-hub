@@ -104,7 +104,19 @@ export interface StatsTemplate extends BaseTemplate {
   notesLabelKey: string;
 }
 
-export type Template = ScoredTemplate | ChecklistTemplate | StatsTemplate;
+/**
+ * A spreadsheet-style mark grid (Analysis of Results): fixed 10 student rows x
+ * up to 10 question columns, a header row of "out of" marks per question, and
+ * auto-computed row totals/percentages + column totals/averages. Doesn't fit
+ * scored/checklist/stats — those are all flat item lists, this is a 2D grid.
+ */
+export interface GridTemplate extends BaseTemplate {
+  mode: "grid";
+  maxQuestions: number;
+  maxStudents: number;
+}
+
+export type Template = ScoredTemplate | ChecklistTemplate | StatsTemplate | GridTemplate;
 
 // ---- Pre-Moderation (checklist, no score) ----
 const PRE_MODERATION_SECTIONS: ChecklistSection[] = [
@@ -247,11 +259,20 @@ export const POST_MODERATION_TEMPLATE: StatsTemplate = {
   ],
 };
 
-export type ModType = "pre_moderation" | "post_moderation" | "book_control";
+// ---- Analysis of Results (grid — fixed 10 students x 10 questions) ----
+export const ANALYSIS_OF_RESULTS_TEMPLATE: GridTemplate = {
+  mode: "grid",
+  metaFields: ["subject", "grade", "term", "moderation_date"],
+  maxQuestions: 10,
+  maxStudents: 10,
+};
+
+export type ModType = "pre_moderation" | "post_moderation" | "book_control" | "analysis_of_results";
 
 export function templateFor(type: ModType): Template {
   if (type === "post_moderation") return POST_MODERATION_TEMPLATE;
   if (type === "book_control") return BOOK_CONTROL_TEMPLATE;
+  if (type === "analysis_of_results") return ANALYSIS_OF_RESULTS_TEMPLATE;
   return PRE_MODERATION_TEMPLATE;
 }
 
@@ -284,4 +305,40 @@ export function statusFromPercentage(p: number): "green" | "orange" | "red" {
   if (p >= 85) return "green";
   if (p >= 70) return "orange";
   return "red";
+}
+
+// ---- Grid math (Analysis of Results) — shared by the create form, the
+// viewer, and the PDF so the three can never disagree on a total. `null`
+// means "not entered" and is excluded from both the row and column maths. ----
+
+export interface GridRow {
+  name: string;
+  marks: (number | null)[];
+}
+
+export function computeGridRow(marks: (number | null)[], questionMaxMarks: (number | null)[]) {
+  let total = 0;
+  let max = 0;
+  marks.forEach((m, i) => {
+    const qMax = questionMaxMarks[i];
+    if (m == null || qMax == null) return;
+    total += m;
+    max += qMax;
+  });
+  return { total, max, percentage: max ? (total / max) * 100 : 0 };
+}
+
+/** Column-wise "Total mark" / "Average mark" footer rows, derived — never stored. */
+export function computeGridColumns(rows: GridRow[], questionCount: number) {
+  const totals = new Array(questionCount).fill(0);
+  const counts = new Array(questionCount).fill(0);
+  rows.forEach((r) => {
+    r.marks.forEach((m, i) => {
+      if (m == null) return;
+      totals[i] += m;
+      counts[i] += 1;
+    });
+  });
+  const averages = totals.map((t, i) => (counts[i] ? t / counts[i] : 0));
+  return { totals, averages };
 }

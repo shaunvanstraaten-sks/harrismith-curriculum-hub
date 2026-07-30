@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth, hasAnyRole } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ClipboardList, ClipboardCheck, BookOpen, TrendingUp, Users, AlertCircle } from "lucide-react";
+import { ClipboardList, ClipboardCheck, BookOpen, TrendingUp, Users, AlertCircle, BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -125,7 +125,7 @@ function DashboardPage() {
       {/* Moderation cards */}
       <section>
         <h2 className="text-xl font-semibold mb-4">{t("dashboard.curriculumModeration")}</h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <ModerationCard
             to="/moderation/pre/new"
             title={t("dashboard.preModeration")}
@@ -147,13 +147,20 @@ function DashboardPage() {
             icon={<BookOpen size={28} />}
             color="bg-brand-orange text-white"
           />
+          <ModerationCard
+            to="/moderation/analysis/new"
+            title={t("dashboard.analysisOfResults")}
+            desc={t("dashboard.analysisOfResultsDesc")}
+            icon={<BarChart3 size={28} />}
+            color="bg-brand-navy text-white"
+          />
         </div>
       </section>
 
       {/* Moderations completed about me, by type */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">{t("dashboard.myCompleted")}</h2>
-        {(["pre_moderation", "post_moderation", "book_control"] as const).map((type) => {
+        {(["pre_moderation", "post_moderation", "book_control", "analysis_of_results"] as const).map((type) => {
           const items = (myCompleted ?? []).filter((r: any) => r.moderation_type === type);
           return (
             <div key={type} className="card-elevated overflow-hidden">
@@ -207,6 +214,7 @@ function DashboardPage() {
 function completedLabelKey(type: string) {
   if (type === "book_control") return "dashboard.completedBook";
   if (type === "post_moderation") return "dashboard.completedPost";
+  if (type === "analysis_of_results") return "dashboard.completedAnalysis";
   return "dashboard.completedPre";
 }
 
