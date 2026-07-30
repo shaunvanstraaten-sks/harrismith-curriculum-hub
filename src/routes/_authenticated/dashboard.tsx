@@ -33,25 +33,6 @@ function DashboardPage() {
     },
   });
 
-  // Moderations completed *about me* as the teacher. When a Head of Subject
-  // submits e.g. a Book Control for this teacher, it lands here.
-  const { data: myCompleted } = useQuery({
-    queryKey: ["my-completed", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("moderation_submissions")
-        .select(
-          "id, moderation_type, moderation_date, quarter, percentage, max_score, grades(name), subjects(name)",
-        )
-        .eq("teacher_id", user!.id)
-        .eq("status", "submitted")
-        .order("moderation_date", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
   const submitted = (submissions ?? []).filter((s) => s.status === "submitted");
   const countOf = (type: string) => submitted.filter((s) => s.moderation_type === type).length;
 
@@ -125,7 +106,7 @@ function DashboardPage() {
       {/* Moderation cards */}
       <section>
         <h2 className="text-xl font-semibold mb-4">{t("dashboard.curriculumModeration")}</h2>
-        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-3">
           <ModerationCard
             to="/moderation/pre/new"
             title={t("dashboard.preModeration")}
@@ -147,6 +128,13 @@ function DashboardPage() {
             icon={<BookOpen size={28} />}
             color="bg-brand-orange text-white"
           />
+        </div>
+      </section>
+
+      {/* Educator self-submitted forms */}
+      <section>
+        <h2 className="text-xl font-semibold mb-4">{t("dashboard.educators")}</h2>
+        <div className="grid gap-4 md:grid-cols-2">
           <ModerationCard
             to="/moderation/analysis/new"
             title={t("dashboard.analysisOfResults")}
@@ -163,67 +151,8 @@ function DashboardPage() {
           />
         </div>
       </section>
-
-      {/* Moderations completed about me, by type */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">{t("dashboard.myCompleted")}</h2>
-        {(["pre_moderation", "post_moderation", "book_control", "analysis_of_results", "subject_improvement_plan"] as const).map((type) => {
-          const items = (myCompleted ?? []).filter((r: any) => r.moderation_type === type);
-          return (
-            <div key={type} className="card-elevated overflow-hidden">
-              <div className="bg-muted/50 px-4 py-2 text-sm font-semibold text-primary">
-                {t(completedLabelKey(type))}
-                <span className="ml-2 font-normal text-muted-foreground">({items.length})</span>
-              </div>
-              {items.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground">{t("dashboard.noneYet")}</div>
-              ) : (
-                <table className="w-full text-sm">
-                  <tbody>
-                    {items.map((r: any) => {
-                      const showPct = type !== "pre_moderation" && Number(r.max_score) > 0;
-                      const pct = Number(r.percentage);
-                      const color = pct >= 85 ? "bg-status-green" : pct >= 70 ? "bg-status-orange" : "bg-status-red";
-                      return (
-                        <tr key={r.id} className="border-t border-border">
-                          <td className="p-3 whitespace-nowrap">{r.moderation_date}</td>
-                          <td className="p-3">{r.subjects?.name ?? "—"}</td>
-                          <td className="p-3">{r.grades?.name ?? "—"}</td>
-                          <td className="p-3">
-                            {t("moderation.term")} {r.quarter}
-                          </td>
-                          <td className="p-3">
-                            {showPct ? (
-                              <span className={`inline-block rounded px-2 py-0.5 text-white text-xs ${color}`}>{pct.toFixed(1)}%</span>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </td>
-                          <td className="p-3 text-right">
-                            <Link to="/moderation/view/$id" params={{ id: r.id }} className="text-primary hover:underline font-medium">
-                              {t("common.view")}
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          );
-        })}
-      </section>
     </div>
   );
-}
-
-function completedLabelKey(type: string) {
-  if (type === "book_control") return "dashboard.completedBook";
-  if (type === "post_moderation") return "dashboard.completedPost";
-  if (type === "analysis_of_results") return "dashboard.completedAnalysis";
-  if (type === "subject_improvement_plan") return "dashboard.completedImprovement";
-  return "dashboard.completedPre";
 }
 
 function KpiCard({
@@ -292,8 +221,8 @@ function ModerationCard({
       className="card-elevated overflow-hidden group hover:shadow-lg transition-shadow"
     >
       <div className={`${color} p-6 flex items-center gap-4`}>
-        <div className="rounded-full bg-white/15 p-3">{icon}</div>
-        <div className="text-xl font-semibold">{title}</div>
+        <div className="rounded-full bg-white/15 p-3 shrink-0">{icon}</div>
+        <div className="text-xl font-semibold min-w-0 break-words">{title}</div>
       </div>
       <div className="p-5 text-sm text-muted-foreground">{desc}</div>
     </Link>

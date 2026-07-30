@@ -190,7 +190,6 @@ function NewModeration() {
     }
     // Refresh the dashboard counts / completed lists / history straight away.
     qc.invalidateQueries({ queryKey: ["dashboard-submissions"] });
-    qc.invalidateQueries({ queryKey: ["my-completed"] });
     qc.invalidateQueries({ queryKey: ["history"] });
     toast.success(submit ? "Submitted" : "Saved as draft");
     navigate({ to: "/moderation/view/$id", params: { id: sub.id } });
