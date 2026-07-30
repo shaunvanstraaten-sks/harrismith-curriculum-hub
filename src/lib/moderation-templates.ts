@@ -301,11 +301,40 @@ export function optionForCompliance(scale: ScaleKey, c: Compliance): ScaleOption
   return SCALES[scale].find((o) => o.compliance === c);
 }
 
+/** i18n key for a moderation type's display name — the single source of truth
+ * so every place that names a type (History filter, dashboard cards, PDF
+ * report headings) says the same thing. */
+export function typeLabelKey(type: string): string {
+  if (type === "book_control") return "dashboard.bookControl";
+  if (type === "post_moderation") return "dashboard.postModeration";
+  if (type === "analysis_of_results") return "dashboard.analysisOfResults";
+  return "dashboard.preModeration";
+}
+
 export function statusFromPercentage(p: number): "green" | "orange" | "red" {
   if (p >= 85) return "green";
   if (p >= 70) return "orange";
   return "red";
 }
+
+/**
+ * Analysis of Results' own 4-band per-student colouring (distinct from the
+ * app-wide 85/70 scored-moderation thresholds above): 80-100 green,
+ * 71-79 orange, 50-70 yellow, 0-49 red.
+ */
+export function gridPercentBand(p: number): "green" | "orange" | "yellow" | "red" {
+  if (p >= 80) return "green";
+  if (p >= 71) return "orange";
+  if (p >= 50) return "yellow";
+  return "red";
+}
+
+export const GRID_PERCENT_CLASSES: Record<ReturnType<typeof gridPercentBand>, string> = {
+  green: "bg-status-green/15 text-status-green",
+  orange: "bg-status-orange/15 text-status-orange",
+  yellow: "bg-status-yellow/20 text-status-yellow",
+  red: "bg-status-red/15 text-status-red",
+};
 
 // ---- Grid math (Analysis of Results) — shared by the create form, the
 // viewer, and the PDF so the three can never disagree on a total. `null`

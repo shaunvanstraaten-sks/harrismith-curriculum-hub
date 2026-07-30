@@ -8,6 +8,9 @@ import {
   scoreToCompliance,
   optionForCompliance,
   computeGridColumns,
+  gridPercentBand,
+  GRID_PERCENT_CLASSES,
+  typeLabelKey,
   type Compliance,
   type GridRow,
 } from "@/lib/moderation-templates";
@@ -122,6 +125,7 @@ function ViewModeration() {
       mode: tpl.mode,
       showPercentage: showScore,
       summaryLabel: tpl.mode === "stats" ? t("pmItems.grade_average") : undefined,
+      reportSubtitle: `${t(typeLabelKey(modType))} ${t("moderation.reportWord")}`,
       title:
         isChecklist || isGrid
           ? `${isGrid ? t("dashboard.analysisOfResults") : t(`dashboard.${modType === "book_control" ? "bookControl" : "preModeration"}`)} — ${t("moderation.term")} ${sub.quarter}`
@@ -251,7 +255,9 @@ function ViewModeration() {
                     </td>
                   ))}
                   <td className="p-2 text-center border border-border font-medium">{Number(r.row_total)}</td>
-                  <td className="p-2 text-center border border-border font-medium">{Number(r.row_percentage).toFixed(1)}%</td>
+                  <td className={`p-2 text-center border border-border font-semibold ${GRID_PERCENT_CLASSES[gridPercentBand(Number(r.row_percentage))]}`}>
+                    {Number(r.row_percentage).toFixed(1)}%
+                  </td>
                 </tr>
               ))}
             </tbody>

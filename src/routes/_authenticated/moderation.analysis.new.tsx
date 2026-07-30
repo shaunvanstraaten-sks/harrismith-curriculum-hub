@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { computeGridRow, computeGridColumns, type GridRow } from "@/lib/moderation-templates";
+import { computeGridRow, computeGridColumns, gridPercentBand, GRID_PERCENT_CLASSES, type GridRow } from "@/lib/moderation-templates";
 
 const MAX_QUESTIONS = 10;
 const MAX_STUDENTS = 10;
@@ -308,7 +308,11 @@ function NewAnalysisOfResults() {
                   <td className="p-2 text-center border border-border font-medium">
                     {row.name.trim() ? total : "—"}
                   </td>
-                  <td className="p-2 text-center border border-border font-medium">
+                  <td
+                    className={`p-2 text-center border border-border font-semibold ${
+                      row.name.trim() ? GRID_PERCENT_CLASSES[gridPercentBand(percentage)] : ""
+                    }`}
+                  >
                     {row.name.trim() ? `${percentage.toFixed(1)}%` : "—"}
                   </td>
                 </tr>

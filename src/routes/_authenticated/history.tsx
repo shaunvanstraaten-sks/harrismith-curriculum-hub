@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, hasAnyRole } from "@/hooks/use-auth";
+import { typeLabelKey } from "@/lib/moderation-templates";
 import type { Database } from "@/integrations/supabase/types";
 
 type ModType = Database["public"]["Enums"]["moderation_type"];
@@ -253,13 +254,6 @@ function HistoryPage() {
 }
 
 const inputCls = "mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
-
-export function typeLabelKey(type: string) {
-  if (type === "book_control") return "dashboard.bookControl";
-  if (type === "post_moderation") return "dashboard.postModeration";
-  if (type === "analysis_of_results") return "dashboard.analysisOfResults";
-  return "dashboard.preModeration";
-}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

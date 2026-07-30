@@ -4,6 +4,8 @@ export interface PdfSubmission {
   mode?: "scored" | "checklist" | "stats" | "grid";
   showPercentage?: boolean;
   summaryLabel?: string;
+  /** Subtitle under the school name, e.g. "Analysis of Results Report". Defaults to "Curriculum Moderation Report". */
+  reportSubtitle?: string;
   title: string;
   teacherName: string;
   teacherLabel?: string;
@@ -61,7 +63,7 @@ export async function generateModerationPdf(s: PdfSubmission) {
   doc.text("Harrismith Primary School", W / 2, y + 18, { align: "center" });
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text("Curriculum Moderation Report", W / 2, y + 34, { align: "center" });
+  doc.text(s.reportSubtitle ?? "Curriculum Moderation Report", W / 2, y + 34, { align: "center" });
   y += 60;
 
   doc.setDrawColor(200);
