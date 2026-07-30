@@ -287,6 +287,50 @@ export type Database = {
         }
         Relationships: []
       }
+      subject_improvement_items: {
+        Row: {
+          challenge: string
+          created_at: string
+          id: string
+          learner_groups: string[]
+          performance_indicator: string
+          sort_order: number
+          strategy: string
+          submission_id: string
+          timeframe: string
+        }
+        Insert: {
+          challenge: string
+          created_at?: string
+          id?: string
+          learner_groups?: string[]
+          performance_indicator: string
+          sort_order: number
+          strategy: string
+          submission_id: string
+          timeframe: string
+        }
+        Update: {
+          challenge?: string
+          created_at?: string
+          id?: string
+          learner_groups?: string[]
+          performance_indicator?: string
+          sort_order?: number
+          strategy?: string
+          submission_id?: string
+          timeframe?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subject_improvement_items_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "moderation_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subjects: {
         Row: {
           department_id: string | null
@@ -364,6 +408,7 @@ export type Database = {
         | "post_moderation"
         | "book_control"
         | "analysis_of_results"
+        | "subject_improvement_plan"
       submission_status: "draft" | "submitted"
     }
     CompositeTypes: {
@@ -504,6 +549,7 @@ export const Constants = {
         "post_moderation",
         "book_control",
         "analysis_of_results",
+        "subject_improvement_plan",
       ],
       submission_status: ["draft", "submitted"],
     },

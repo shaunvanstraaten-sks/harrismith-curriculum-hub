@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, hasAnyRole } from "@/hooks/use-auth";
-import { typeLabelKey } from "@/lib/moderation-templates";
+import { typeLabelKey, STRICT_VISIBILITY_TYPES } from "@/lib/moderation-templates";
 import type { Database } from "@/integrations/supabase/types";
 
 type ModType = Database["public"]["Enums"]["moderation_type"];
@@ -48,11 +48,12 @@ function HistoryPage() {
   const isStaff = hasAnyRole(roles, ["administrator", "principal", "hod", "head_of_subject"]);
   const search = Route.useSearch();
   const [f, setF] = useState({ ...EMPTY, ...search });
-  // Analysis of Results has a stricter visibility rule than the other three
-  // types — only Principal/Administrator may look up other teachers' rows
-  // (hod/head_of_subject cannot, unlike the general "staff sees all" rule).
-  // This only gates the picker itself; RLS is the actual enforcement.
-  const canFilterByTeacher = f.type === "analysis_of_results" ? hasAnyRole(roles, ["principal", "administrator"]) : isStaff;
+  // Analysis of Results / Subject Improvement Plan have a stricter visibility
+  // rule than the other types — only Principal/Administrator may look up
+  // other teachers' rows (hod/head_of_subject cannot, unlike the general
+  // "staff sees all" rule). This only gates the picker itself; RLS is the
+  // actual enforcement.
+  const canFilterByTeacher = STRICT_VISIBILITY_TYPES.includes(f.type) ? hasAnyRole(roles, ["principal", "administrator"]) : isStaff;
 
   const { data: grades } = useQuery({
     queryKey: ["grades"],
@@ -118,6 +119,7 @@ function HistoryPage() {
             <option value="post_moderation">{t("dashboard.postModeration")}</option>
             <option value="book_control">{t("dashboard.bookControl")}</option>
             <option value="analysis_of_results">{t("dashboard.analysisOfResults")}</option>
+            <option value="subject_improvement_plan">{t("dashboard.subjectImprovementPlan")}</option>
           </select>
         </Field>
 

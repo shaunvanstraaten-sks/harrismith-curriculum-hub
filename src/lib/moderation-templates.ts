@@ -116,7 +116,25 @@ export interface GridTemplate extends BaseTemplate {
   maxStudents: number;
 }
 
-export type Template = ScoredTemplate | ChecklistTemplate | StatsTemplate | GridTemplate;
+/**
+ * Repeatable free-text rows (Subject Improvement Plan): challenge/strategy
+ * items, dynamic count (unlike Analysis of Results' fixed grid), no scoring.
+ */
+export type LearnerGroup = "retained" | "progressed" | "all";
+export const LEARNER_GROUPS: LearnerGroup[] = ["retained", "progressed", "all"];
+
+export interface SubjectImprovementItem {
+  challenge: string;
+  learnerGroups: LearnerGroup[];
+  strategy: string;
+  timeframe: string;
+  performanceIndicator: string;
+}
+export interface ListTemplate extends BaseTemplate {
+  mode: "list";
+}
+
+export type Template = ScoredTemplate | ChecklistTemplate | StatsTemplate | GridTemplate | ListTemplate;
 
 // ---- Pre-Moderation (checklist, no score) ----
 const PRE_MODERATION_SECTIONS: ChecklistSection[] = [
@@ -267,12 +285,24 @@ export const ANALYSIS_OF_RESULTS_TEMPLATE: GridTemplate = {
   maxStudents: 10,
 };
 
-export type ModType = "pre_moderation" | "post_moderation" | "book_control" | "analysis_of_results";
+// ---- Subject Improvement Plan (list — dynamic challenge/strategy rows) ----
+export const SUBJECT_IMPROVEMENT_PLAN_TEMPLATE: ListTemplate = {
+  mode: "list",
+  metaFields: ["subject", "grade", "term", "moderation_date"],
+};
+
+export type ModType =
+  | "pre_moderation"
+  | "post_moderation"
+  | "book_control"
+  | "analysis_of_results"
+  | "subject_improvement_plan";
 
 export function templateFor(type: ModType): Template {
   if (type === "post_moderation") return POST_MODERATION_TEMPLATE;
   if (type === "book_control") return BOOK_CONTROL_TEMPLATE;
   if (type === "analysis_of_results") return ANALYSIS_OF_RESULTS_TEMPLATE;
+  if (type === "subject_improvement_plan") return SUBJECT_IMPROVEMENT_PLAN_TEMPLATE;
   return PRE_MODERATION_TEMPLATE;
 }
 
@@ -304,10 +334,16 @@ export function optionForCompliance(scale: ScaleKey, c: Compliance): ScaleOption
 /** i18n key for a moderation type's display name — the single source of truth
  * so every place that names a type (History filter, dashboard cards, PDF
  * report headings) says the same thing. */
+/** Types where only the submitting teacher + Principal + Administrator may
+ * see someone else's submission (hod/head_of_subject cannot) — used to gate
+ * the "view any teacher" picker in History for these types specifically. */
+export const STRICT_VISIBILITY_TYPES: string[] = ["analysis_of_results", "subject_improvement_plan"];
+
 export function typeLabelKey(type: string): string {
   if (type === "book_control") return "dashboard.bookControl";
   if (type === "post_moderation") return "dashboard.postModeration";
   if (type === "analysis_of_results") return "dashboard.analysisOfResults";
+  if (type === "subject_improvement_plan") return "dashboard.subjectImprovementPlan";
   return "dashboard.preModeration";
 }
 

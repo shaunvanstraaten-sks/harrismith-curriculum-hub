@@ -46,16 +46,21 @@ function ViewModeration() {
         sub.moderation_type === "analysis_of_results"
           ? await supabase.from("analysis_of_results_students").select("*").eq("submission_id", id).order("row_number")
           : { data: [] as never[] };
-      return { sub, scores: scores ?? [], gridRows: gridRows ?? [] };
+      const { data: improvementRows } =
+        sub.moderation_type === "subject_improvement_plan"
+          ? await supabase.from("subject_improvement_items").select("*").eq("submission_id", id).order("sort_order")
+          : { data: [] as never[] };
+      return { sub, scores: scores ?? [], gridRows: gridRows ?? [], improvementRows: improvementRows ?? [] };
     },
   });
 
   if (isLoading || !data) return <div className="text-muted-foreground">{t("common.loading")}</div>;
-  const { sub, scores, gridRows } = data;
+  const { sub, scores, gridRows, improvementRows } = data;
   const modType = sub.moderation_type as ModType;
   const tpl = templateFor(modType);
   const isChecklist = tpl.mode === "checklist";
   const isGrid = tpl.mode === "grid";
+  const isList = tpl.mode === "list";
   const showScore = tpl.mode === "scored" || tpl.mode === "stats" || isGrid || (tpl.mode === "checklist" && tpl.showScore);
   const learnersField = tpl.mode === "checklist" && tpl.learnersField;
   const anyS = sub as any;
@@ -127,9 +132,9 @@ function ViewModeration() {
       summaryLabel: tpl.mode === "stats" ? t("pmItems.grade_average") : undefined,
       reportSubtitle: `${t(typeLabelKey(modType))} ${t("moderation.reportWord")}`,
       title:
-        isChecklist || isGrid
-          ? `${isGrid ? t("dashboard.analysisOfResults") : t(`dashboard.${modType === "book_control" ? "bookControl" : "preModeration"}`)} — ${t("moderation.term")} ${sub.quarter}`
-          : `${sub.moderation_type.replace("_", " ")} — Q${sub.quarter} C${sub.cycle}`,
+        isChecklist || isGrid || isList
+          ? `${t(typeLabelKey(modType))} — ${t("moderation.term")} ${sub.quarter}`
+          : `${t(typeLabelKey(modType))} — Q${sub.quarter} C${sub.cycle}`,
       teacherName,
       grade: gradeName,
       subject: subjectName,
@@ -167,15 +172,24 @@ function ViewModeration() {
             columnAverages: gridColumnStats.averages,
           }
         : undefined,
+      list: isList
+        ? (improvementRows as any[]).map((r) => ({
+            challenge: r.challenge,
+            learnerGroups: (r.learner_groups ?? []).map((g: string) => t(`improvement.${g}`)),
+            strategy: r.strategy,
+            timeframe: r.timeframe,
+            performanceIndicator: r.performance_indicator,
+          }))
+        : undefined,
     });
 
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-start justify-between">
         <div>
-          <div className="text-sm text-muted-foreground capitalize">{sub.moderation_type.replace("_", " ")}</div>
+          <div className="text-sm text-muted-foreground">{t(typeLabelKey(modType))}</div>
           <h1 className="text-3xl font-bold">
-            {isChecklist || isGrid ? `${t("moderation.term")} ${sub.quarter}` : `Q${sub.quarter} · C${sub.cycle} · ${sub.weeks}`}
+            {isChecklist || isGrid || isList ? `${t("moderation.term")} ${sub.quarter}` : `Q${sub.quarter} · C${sub.cycle} · ${sub.weeks}`}
           </h1>
           <div className="text-sm text-muted-foreground mt-1">{sub.moderation_date} · {sub.academic_year}</div>
         </div>
@@ -193,7 +207,7 @@ function ViewModeration() {
         <Meta label={t("moderation.grade")} value={gradeName} />
         {isGrid && <Meta label={t("moderation.class")} value={(sub as any).class_name || "—"} />}
         <Meta label={t("moderation.subject")} value={subjectName} />
-        {!isGrid && <Meta label={isChecklist ? t("moderation.moderator") : t("moderation.headOfSubject")} value={hosName} />}
+        {!isGrid && !isList && <Meta label={isChecklist ? t("moderation.moderator") : t("moderation.headOfSubject")} value={hosName} />}
         {sub.type_of_moderation && <Meta label={t("moderation.typeOfModeration")} value={optLabel(sub.type_of_moderation)} />}
         {sub.type_of_assessment && <Meta label={t("moderation.typeOfAssessment")} value={optLabel(sub.type_of_assessment)} />}
         <Meta label={t("moderation.status")} value={sub.status} />
@@ -279,6 +293,44 @@ function ViewModeration() {
               </tr>
             </tfoot>
           </table>
+        </div>
+      ) : isList ? (
+        <div className="space-y-4">
+          {improvementRows.length === 0 ? (
+            <div className="card-elevated p-6 text-sm text-muted-foreground">{t("history.empty")}</div>
+          ) : (
+            (improvementRows as any[]).map((r, i) => (
+              <div key={r.id ?? i} className="card-elevated p-5 space-y-3">
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">{t("improvement.challenge")}</div>
+                  <div className="text-sm whitespace-pre-wrap">{r.challenge}</div>
+                </div>
+                {r.learner_groups?.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {r.learner_groups.map((g: string) => (
+                      <span key={g} className="inline-block rounded-md bg-muted px-2 py-0.5 text-xs font-medium">
+                        {t(`improvement.${g}`)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">{t("improvement.strategy")}</div>
+                    <div className="text-sm whitespace-pre-wrap">{r.strategy || "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">{t("improvement.performanceIndicator")}</div>
+                    <div className="text-sm whitespace-pre-wrap">{r.performance_indicator || "—"}</div>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">{t("improvement.timeframe")}</div>
+                  <div className="text-sm">{r.timeframe || "—"}</div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       ) : tpl.mode === "stats" ? (
         <div className="space-y-4">

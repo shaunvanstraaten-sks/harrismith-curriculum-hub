@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 
 export interface PdfSubmission {
-  mode?: "scored" | "checklist" | "stats" | "grid";
+  mode?: "scored" | "checklist" | "stats" | "grid" | "list";
   showPercentage?: boolean;
   summaryLabel?: string;
   /** Subtitle under the school name, e.g. "Analysis of Results Report". Defaults to "Curriculum Moderation Report". */
@@ -34,6 +34,13 @@ export interface PdfSubmission {
     columnTotals: number[];
     columnAverages: number[];
   };
+  list?: Array<{
+    challenge: string;
+    learnerGroups: string[];
+    strategy: string;
+    timeframe: string;
+    performanceIndicator: string;
+  }>;
 }
 
 async function loadImageAsDataUrl(url: string): Promise<string | null> {
@@ -79,6 +86,7 @@ export async function generateModerationPdf(s: PdfSubmission) {
   doc.setFontSize(10);
   const isChecklist = s.mode === "checklist" || s.mode === "stats";
   const isGrid = s.mode === "grid";
+  const isList = s.mode === "list";
   const meta: Array<[string, string]> = isGrid
     ? [
         ["Teacher", s.teacherName],
@@ -88,7 +96,15 @@ export async function generateModerationPdf(s: PdfSubmission) {
         ["Term", String(s.grid?.term ?? s.quarter)],
         ["Date", s.date],
       ]
-    : [
+    : isList
+      ? [
+          ["Teacher", s.teacherName],
+          ["Grade", s.grade],
+          ["Subject", s.subject],
+          ["Term", String(s.quarter)],
+          ["Date", s.date],
+        ]
+      : [
         [s.teacherLabel ?? (isChecklist ? "Teacher (Examiner)" : "Teacher"), s.teacherName],
         ["Grade", s.grade],
         ["Subject", s.subject],
@@ -110,7 +126,47 @@ export async function generateModerationPdf(s: PdfSubmission) {
 
   y += 10;
 
-  if (isGrid && s.grid) {
+  if (isList) {
+    (s.list ?? []).forEach((item, idx) => {
+      if (y > 700) {
+        doc.addPage();
+        y = 40;
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      const challengeLines = doc.splitTextToSize(`${idx + 1}. ${item.challenge}`, W - 80);
+      doc.text(challengeLines, 40, y);
+      y += challengeLines.length * 14 + 4;
+
+      if (item.learnerGroups.length > 0) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(120);
+        doc.text(item.learnerGroups.join(", "), 40, y);
+        doc.setTextColor(0);
+        y += 14;
+      }
+
+      const field = (label: string, value: string) => {
+        if (!value) return;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.text(`${label}:`, 40, y);
+        doc.setFont("helvetica", "normal");
+        const lines = doc.splitTextToSize(value, W - 130);
+        doc.text(lines, 130, y);
+        y += Math.max(lines.length * 12, 12) + 4;
+      };
+      field("Strategy", item.strategy);
+      field("Time frame", item.timeframe);
+      field("Performance indicator", item.performanceIndicator);
+
+      y += 8;
+      doc.setDrawColor(220);
+      doc.line(40, y, W - 40, y);
+      y += 16;
+    });
+  } else if (isGrid && s.grid) {
     const g = s.grid;
     const qCount = g.questionMaxMarks.length;
     const nameW = 130;
