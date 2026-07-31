@@ -159,7 +159,8 @@ function NewAnalysisOfResults() {
 
     qc.invalidateQueries({ queryKey: ["dashboard-submissions"] });
     qc.invalidateQueries({ queryKey: ["history"] });
-    toast.success(submit ? "Submitted" : "Saved as draft");
+    const name = t("dashboard.analysisOfResults");
+    toast.success(submit ? t("moderation.submittedToast", { name }) : t("moderation.draftToast", { name }));
     navigate({ to: "/moderation/view/$id", params: { id: sub.id } });
   };
 

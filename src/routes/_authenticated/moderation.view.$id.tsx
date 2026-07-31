@@ -199,7 +199,9 @@ function ViewModeration() {
       </div>
 
       {sub.status === "submitted" && (
-        <div className="rounded-md bg-status-green/10 border border-status-green/30 px-4 py-2 text-sm">{t("moderation.submittedReadOnly")}</div>
+        <div className="rounded-md bg-status-green/10 border border-status-green/30 px-4 py-2 text-sm">
+          {t("moderation.submittedReadOnly", { name: t(typeLabelKey(modType)) })}
+        </div>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 text-sm card-elevated p-6">

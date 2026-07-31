@@ -24,10 +24,16 @@ const TYPE_MAP: Record<string, { db: ModType; labelKey: string }> = {
   book: { db: "book_control", labelKey: "dashboard.bookControl" },
 };
 
+const TYPE_TITLE: Record<string, string> = {
+  pre: "Pre-Moderation",
+  post: "Post-Moderation",
+  book: "Book Control",
+};
+
 export const Route = createFileRoute("/_authenticated/moderation/$type/new")({
   component: NewModeration,
-  head: () => ({
-    meta: [{ title: "New moderation — Harrismith Primary" }, { name: "robots", content: "noindex" }],
+  head: ({ params }) => ({
+    meta: [{ title: `New ${TYPE_TITLE[params.type] ?? "Moderation"} — Harrismith Primary` }, { name: "robots", content: "noindex" }],
   }),
 });
 
@@ -191,7 +197,8 @@ function NewModeration() {
     // Refresh the dashboard counts / completed lists / history straight away.
     qc.invalidateQueries({ queryKey: ["dashboard-submissions"] });
     qc.invalidateQueries({ queryKey: ["history"] });
-    toast.success(submit ? "Submitted" : "Saved as draft");
+    const name = t(cfg.labelKey);
+    toast.success(submit ? t("moderation.submittedToast", { name }) : t("moderation.draftToast", { name }));
     navigate({ to: "/moderation/view/$id", params: { id: sub.id } });
   };
 
