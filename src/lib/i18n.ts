@@ -16,6 +16,7 @@ const en = {
     signOut: "Sign out",
     myAccount: "My account",
     history: "History",
+    resources: "Resources",
   },
   auth: {
     signIn: "Sign in",
@@ -276,6 +277,15 @@ const en = {
     selectSubjectGradeTerm: "Please select Subject, Grade and Term.",
     atLeastOneChallenge: "Please add at least one challenge.",
   },
+  resources: {
+    title: "Resources",
+    intro: "Curriculum resources organised by phase.",
+    intermediatePhase: "Intermediate Phase",
+    intermediatePhaseDesc: "Resources for Grades 4–6.",
+    seniorPhase: "Senior Phase",
+    seniorPhaseDesc: "Resources for Grade 7.",
+    empty: "No resources added yet.",
+  },
 };
 
 const af: typeof en = {
@@ -293,6 +303,7 @@ const af: typeof en = {
     signOut: "Teken uit",
     myAccount: "My rekening",
     history: "Geskiedenis",
+    resources: "Hulpbronne",
   },
   auth: {
     signIn: "Teken in",
@@ -552,6 +563,15 @@ const af: typeof en = {
     removeRow: "Verwyder",
     selectSubjectGradeTerm: "Kies asseblief Vak, Graad en Kwartaal.",
     atLeastOneChallenge: "Voeg asseblief ten minste een uitdaging by.",
+  },
+  resources: {
+    title: "Hulpbronne",
+    intro: "Kurrikulum hulpbronne georganiseer volgens fase.",
+    intermediatePhase: "Intermediêre Fase",
+    intermediatePhaseDesc: "Hulpbronne vir Grade 4–6.",
+    seniorPhase: "Senior Fase",
+    seniorPhaseDesc: "Hulpbronne vir Graad 7.",
+    empty: "Nog geen hulpbronne bygevoeg nie.",
   },
 };
 

@@ -19,6 +19,9 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedTeachersRouteImport } from './routes/_authenticated/teachers'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedModerationIndexRouteImport } from './routes/_authenticated/moderation.index'
+import { Route as AuthenticatedResourcesIndexRouteImport } from './routes/_authenticated/resources.index'
+import { Route as AuthenticatedResourcesIntermediateRouteImport } from './routes/_authenticated/resources.intermediate'
+import { Route as AuthenticatedResourcesSeniorRouteImport } from './routes/_authenticated/resources.senior'
 import { Route as AuthenticatedModerationTypeNewRouteImport } from './routes/_authenticated/moderation.$type.new'
 import { Route as AuthenticatedModerationAnalysisNewRouteImport } from './routes/_authenticated/moderation.analysis.new'
 import { Route as AuthenticatedModerationImprovementNewRouteImport } from './routes/_authenticated/moderation.improvement.new'
@@ -74,6 +77,24 @@ const AuthenticatedModerationIndexRoute =
     path: '/moderation/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedResourcesIndexRoute =
+  AuthenticatedResourcesIndexRouteImport.update({
+    id: '/resources/',
+    path: '/resources/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedResourcesIntermediateRoute =
+  AuthenticatedResourcesIntermediateRouteImport.update({
+    id: '/resources/intermediate',
+    path: '/resources/intermediate',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedResourcesSeniorRoute =
+  AuthenticatedResourcesSeniorRouteImport.update({
+    id: '/resources/senior',
+    path: '/resources/senior',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedModerationTypeNewRoute =
   AuthenticatedModerationTypeNewRouteImport.update({
     id: '/moderation/$type/new',
@@ -108,7 +129,10 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/teachers': typeof AuthenticatedTeachersRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/resources/intermediate': typeof AuthenticatedResourcesIntermediateRoute
+  '/resources/senior': typeof AuthenticatedResourcesSeniorRoute
   '/moderation/': typeof AuthenticatedModerationIndexRoute
+  '/resources/': typeof AuthenticatedResourcesIndexRoute
   '/moderation/$type/new': typeof AuthenticatedModerationTypeNewRoute
   '/moderation/analysis/new': typeof AuthenticatedModerationAnalysisNewRoute
   '/moderation/improvement/new': typeof AuthenticatedModerationImprovementNewRoute
@@ -123,7 +147,10 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsRoute
   '/teachers': typeof AuthenticatedTeachersRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/resources/intermediate': typeof AuthenticatedResourcesIntermediateRoute
+  '/resources/senior': typeof AuthenticatedResourcesSeniorRoute
   '/moderation': typeof AuthenticatedModerationIndexRoute
+  '/resources': typeof AuthenticatedResourcesIndexRoute
   '/moderation/$type/new': typeof AuthenticatedModerationTypeNewRoute
   '/moderation/analysis/new': typeof AuthenticatedModerationAnalysisNewRoute
   '/moderation/improvement/new': typeof AuthenticatedModerationImprovementNewRoute
@@ -140,7 +167,10 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/teachers': typeof AuthenticatedTeachersRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/resources/intermediate': typeof AuthenticatedResourcesIntermediateRoute
+  '/_authenticated/resources/senior': typeof AuthenticatedResourcesSeniorRoute
   '/_authenticated/moderation/': typeof AuthenticatedModerationIndexRoute
+  '/_authenticated/resources/': typeof AuthenticatedResourcesIndexRoute
   '/_authenticated/moderation/$type/new': typeof AuthenticatedModerationTypeNewRoute
   '/_authenticated/moderation/analysis/new': typeof AuthenticatedModerationAnalysisNewRoute
   '/_authenticated/moderation/improvement/new': typeof AuthenticatedModerationImprovementNewRoute
@@ -157,7 +187,10 @@ export interface FileRouteTypes {
     | '/reports'
     | '/teachers'
     | '/admin/users'
+    | '/resources/intermediate'
+    | '/resources/senior'
     | '/moderation/'
+    | '/resources/'
     | '/moderation/$type/new'
     | '/moderation/analysis/new'
     | '/moderation/improvement/new'
@@ -172,7 +205,10 @@ export interface FileRouteTypes {
     | '/reports'
     | '/teachers'
     | '/admin/users'
+    | '/resources/intermediate'
+    | '/resources/senior'
     | '/moderation'
+    | '/resources'
     | '/moderation/$type/new'
     | '/moderation/analysis/new'
     | '/moderation/improvement/new'
@@ -188,7 +224,10 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/teachers'
     | '/_authenticated/admin/users'
+    | '/_authenticated/resources/intermediate'
+    | '/_authenticated/resources/senior'
     | '/_authenticated/moderation/'
+    | '/_authenticated/resources/'
     | '/_authenticated/moderation/$type/new'
     | '/_authenticated/moderation/analysis/new'
     | '/_authenticated/moderation/improvement/new'
@@ -274,6 +313,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedModerationIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/resources/': {
+      id: '/_authenticated/resources/'
+      path: '/resources'
+      fullPath: '/resources/'
+      preLoaderRoute: typeof AuthenticatedResourcesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/resources/intermediate': {
+      id: '/_authenticated/resources/intermediate'
+      path: '/resources/intermediate'
+      fullPath: '/resources/intermediate'
+      preLoaderRoute: typeof AuthenticatedResourcesIntermediateRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/resources/senior': {
+      id: '/_authenticated/resources/senior'
+      path: '/resources/senior'
+      fullPath: '/resources/senior'
+      preLoaderRoute: typeof AuthenticatedResourcesSeniorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/moderation/$type/new': {
       id: '/_authenticated/moderation/$type/new'
       path: '/moderation/$type/new'
@@ -311,7 +371,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedTeachersRoute: typeof AuthenticatedTeachersRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedResourcesIntermediateRoute: typeof AuthenticatedResourcesIntermediateRoute
+  AuthenticatedResourcesSeniorRoute: typeof AuthenticatedResourcesSeniorRoute
   AuthenticatedModerationIndexRoute: typeof AuthenticatedModerationIndexRoute
+  AuthenticatedResourcesIndexRoute: typeof AuthenticatedResourcesIndexRoute
   AuthenticatedModerationTypeNewRoute: typeof AuthenticatedModerationTypeNewRoute
   AuthenticatedModerationAnalysisNewRoute: typeof AuthenticatedModerationAnalysisNewRoute
   AuthenticatedModerationImprovementNewRoute: typeof AuthenticatedModerationImprovementNewRoute
@@ -324,7 +387,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedTeachersRoute: AuthenticatedTeachersRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedResourcesIntermediateRoute:
+    AuthenticatedResourcesIntermediateRoute,
+  AuthenticatedResourcesSeniorRoute: AuthenticatedResourcesSeniorRoute,
   AuthenticatedModerationIndexRoute: AuthenticatedModerationIndexRoute,
+  AuthenticatedResourcesIndexRoute: AuthenticatedResourcesIndexRoute,
   AuthenticatedModerationTypeNewRoute: AuthenticatedModerationTypeNewRoute,
   AuthenticatedModerationAnalysisNewRoute:
     AuthenticatedModerationAnalysisNewRoute,

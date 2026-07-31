@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, hasAnyRole, type AppRole } from "@/hooks/use-auth";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { LogOut, LayoutDashboard, ClipboardCheck, FileText, Users, History } from "lucide-react";
+import { LogOut, LayoutDashboard, ClipboardCheck, FileText, Users, History, Library } from "lucide-react";
 
 interface NavItem {
   to: string;
@@ -29,6 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/moderation", labelKey: "nav.moderation", icon: <ClipboardCheck size={18} /> },
     { to: "/history", labelKey: "nav.history", icon: <History size={18} /> },
     { to: "/reports", labelKey: "nav.reports", icon: <FileText size={18} /> },
+    { to: "/resources", labelKey: "nav.resources", icon: <Library size={18} /> },
     {
       to: "/admin/users",
       labelKey: "nav.users",
