@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { GraduationCap, School } from "lucide-react";
+import { DbeBanner } from "@/components/DbeBanner";
 
 export const Route = createFileRoute("/_authenticated/resources/")({
   component: ResourcesHome,
@@ -29,6 +30,7 @@ function ResourcesHome() {
   ];
   return (
     <div className="space-y-6">
+      <DbeBanner />
       <div>
         <h1 className="text-3xl font-bold">{t("resources.title")}</h1>
         <p className="text-sm text-muted-foreground mt-1">{t("resources.intro")}</p>
