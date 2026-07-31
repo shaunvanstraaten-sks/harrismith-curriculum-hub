@@ -10,6 +10,7 @@ import { computeGridRow, computeGridColumns, gridPercentBand, GRID_PERCENT_CLASS
 const MAX_QUESTIONS = 10;
 const MAX_STUDENTS = 10;
 const GRADE_NAME_RE = /^Grade [4-7]$/;
+const CLASS_OPTIONS = ["A", "B", "EA", "EB"];
 
 type StudentInput = { name: string; marks: (number | null)[] };
 
@@ -215,12 +216,18 @@ function NewAnalysisOfResults() {
           </div>
           <div className="flex-1">
             <label className="block text-sm font-medium">{t("moderation.class")}</label>
-            <input
+            <select
               value={className}
               onChange={(e) => setClassName(e.target.value)}
-              placeholder={t("analysis.classPlaceholder")}
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            />
+            >
+              <option value="">—</option>
+              {CLASS_OPTIONS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

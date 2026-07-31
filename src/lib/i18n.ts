@@ -262,7 +262,6 @@ const en = {
     required: "Required",
     selectSubjectGradeTerm: "Please select Subject, Grade and Term.",
     atLeastOneStudent: "Please enter at least one student's name.",
-    classPlaceholder: "e.g. 4A",
   },
   improvement: {
     challenge: "Challenges / Priorities",
@@ -563,7 +562,6 @@ const af: typeof en = {
     required: "Verpligtend",
     selectSubjectGradeTerm: "Kies asseblief Vak, Graad en Kwartaal.",
     atLeastOneStudent: "Voer asseblief ten minste een leerder se naam in.",
-    classPlaceholder: "bv. 4A",
   },
   improvement: {
     challenge: "Uitdagings / Prioriteite",
