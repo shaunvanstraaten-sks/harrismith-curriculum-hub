@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { DbeBanner } from "@/components/DbeBanner";
+import { AtpResourceBrowser } from "@/components/AtpResourceBrowser";
+
+const INTERMEDIATE_GRADES = ["Grade 4", "Grade 5", "Grade 6"];
 
 export const Route = createFileRoute("/_authenticated/resources/intermediate")({
   component: IntermediatePhaseResources,
@@ -18,7 +21,7 @@ function IntermediatePhaseResources() {
         <div className="text-sm text-muted-foreground">{t("nav.resources")}</div>
         <h1 className="text-3xl font-bold">{t("resources.intermediatePhase")}</h1>
       </div>
-      <div className="card-elevated p-10 text-center text-muted-foreground">{t("resources.empty")}</div>
+      <AtpResourceBrowser phase="intermediate" gradeNames={INTERMEDIATE_GRADES} />
     </div>
   );
 }
