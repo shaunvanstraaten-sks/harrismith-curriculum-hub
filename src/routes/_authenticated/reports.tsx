@@ -29,8 +29,8 @@ function ReportsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">{t("nav.reports")}</h1>
-      <div className="card-elevated overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="card-elevated overflow-x-auto">
+        <table className="w-full text-sm min-w-[760px]">
           <thead className="bg-muted/50 text-left">
             <tr>
               <th className="p-3">{t("moderation.date")}</th>

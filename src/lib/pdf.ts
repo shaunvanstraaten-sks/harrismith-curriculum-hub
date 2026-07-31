@@ -186,7 +186,10 @@ export async function generateModerationPdf(s: PdfSubmission) {
       doc.setFont("helvetica", "normal");
       doc.setTextColor(120);
       doc.text("Out of", 40, y);
-      for (let i = 0; i < qCount; i++) doc.text(String(g.questionMaxMarks[i] ?? "—"), qX(i), y, { align: "center" });
+      for (let i = 0; i < qCount; i++) {
+        const v = g.questionMaxMarks[i];
+        if (v != null) doc.text(String(v), qX(i), y, { align: "center" });
+      }
       doc.setTextColor(0);
       y += 6;
       doc.setDrawColor(200);
@@ -204,11 +207,19 @@ export async function generateModerationPdf(s: PdfSubmission) {
       }
       doc.setFont("helvetica", "normal");
       doc.text(st.name, 40, y);
-      st.marks.forEach((m, i) => doc.text(m == null ? "—" : String(m), qX(i), y, { align: "center" }));
+      st.marks.forEach((m, i) => {
+        if (m != null) doc.text(String(m), qX(i), y, { align: "center" });
+      });
       doc.setFont("helvetica", "bold");
       doc.text(String(st.total), totalX, y, { align: "center" });
       doc.text(`${st.percentage.toFixed(0)}%`, pctX, y, { align: "center" });
-      y += 14;
+      y += 6;
+      // Subtle row separator so a student's marks can be traced left to right.
+      doc.setDrawColor(230);
+      doc.setLineWidth(0.3);
+      doc.line(40, y, W - 40, y);
+      doc.setLineWidth(0.2);
+      y += 8;
     });
 
     y += 4;
@@ -218,12 +229,16 @@ export async function generateModerationPdf(s: PdfSubmission) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text("Total mark", 40, y);
-    g.columnTotals.forEach((v, i) => doc.text(v ? String(v) : "—", qX(i), y, { align: "center" }));
+    g.columnTotals.forEach((v, i) => {
+      if (v) doc.text(String(v), qX(i), y, { align: "center" });
+    });
     doc.text(String(s.totalScore), totalX, y, { align: "center" });
     doc.text(`${s.percentage.toFixed(0)}%`, pctX, y, { align: "center" });
     y += 14;
     doc.text("Average mark", 40, y);
-    g.columnAverages.forEach((v, i) => doc.text(v ? v.toFixed(1) : "—", qX(i), y, { align: "center" }));
+    g.columnAverages.forEach((v, i) => {
+      if (v) doc.text(v.toFixed(1), qX(i), y, { align: "center" });
+    });
     y += 20;
   } else if (isChecklist) {
     (s.checklistSections ?? []).forEach((sec) => {

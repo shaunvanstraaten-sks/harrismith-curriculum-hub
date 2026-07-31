@@ -253,7 +253,7 @@ function ViewModeration() {
                 </th>
                 {gridQuestionMax.map((v, i) => (
                   <th key={i} className="p-2 text-center border border-border font-normal text-muted-foreground">
-                    {v ?? "—"}
+                    {v ?? ""}
                   </th>
                 ))}
                 <th className="border border-border" colSpan={2} />
@@ -265,7 +265,7 @@ function ViewModeration() {
                   <td className="p-2 border border-border sticky left-0 bg-background">{r.student_name}</td>
                   {gridQuestionMax.map((_, i) => (
                     <td key={i} className="p-2 text-center border border-border">
-                      {r.marks[i] ?? "—"}
+                      {r.marks[i] ?? ""}
                     </td>
                   ))}
                   <td className="p-2 text-center border border-border font-medium">{Number(r.row_total)}</td>
@@ -279,7 +279,7 @@ function ViewModeration() {
               <tr className="bg-muted/30 font-semibold">
                 <td className="p-2 border border-border sticky left-0 bg-muted/30">{t("analysis.totalRow")}</td>
                 {gridColumnStats.totals.map((v, i) => (
-                  <td key={i} className="p-2 text-center border border-border">{v || "—"}</td>
+                  <td key={i} className="p-2 text-center border border-border">{v || ""}</td>
                 ))}
                 <td className="p-2 text-center border border-border">{Number(sub.total_score)}</td>
                 <td className="p-2 text-center border border-border">{Number(sub.percentage).toFixed(1)}%</td>
@@ -287,7 +287,7 @@ function ViewModeration() {
               <tr className="bg-muted/30 font-semibold">
                 <td className="p-2 border border-border sticky left-0 bg-muted/30">{t("analysis.averageRow")}</td>
                 {gridColumnStats.averages.map((v, i) => (
-                  <td key={i} className="p-2 text-center border border-border">{v ? v.toFixed(1) : "—"}</td>
+                  <td key={i} className="p-2 text-center border border-border">{v ? v.toFixed(1) : ""}</td>
                 ))}
                 <td className="border border-border" colSpan={2} />
               </tr>

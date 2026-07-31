@@ -305,14 +305,14 @@ function NewAnalysisOfResults() {
                     </td>
                   ))}
                   <td className="p-2 text-center border border-border font-medium">
-                    {row.name.trim() ? total : "—"}
+                    {row.name.trim() ? total : ""}
                   </td>
                   <td
                     className={`p-2 text-center border border-border font-semibold ${
                       row.name.trim() ? GRID_PERCENT_CLASSES[gridPercentBand(percentage)] : ""
                     }`}
                   >
-                    {row.name.trim() ? `${percentage.toFixed(1)}%` : "—"}
+                    {row.name.trim() ? `${percentage.toFixed(1)}%` : ""}
                   </td>
                 </tr>
               );
@@ -323,17 +323,17 @@ function NewAnalysisOfResults() {
               <td className="p-2 border border-border sticky left-0 bg-muted/30">{t("analysis.totalRow")}</td>
               {columns.totals.map((v, i) => (
                 <td key={i} className="p-2 text-center border border-border">
-                  {v || "—"}
+                  {v || ""}
                 </td>
               ))}
-              <td className="p-2 text-center border border-border">{classTotal || "—"}</td>
-              <td className="p-2 text-center border border-border">{rowStats.length ? `${classAvgPct.toFixed(1)}%` : "—"}</td>
+              <td className="p-2 text-center border border-border">{classTotal || ""}</td>
+              <td className="p-2 text-center border border-border">{rowStats.length ? `${classAvgPct.toFixed(1)}%` : ""}</td>
             </tr>
             <tr className="bg-muted/30 font-semibold">
               <td className="p-2 border border-border sticky left-0 bg-muted/30">{t("analysis.averageRow")}</td>
               {columns.averages.map((v, i) => (
                 <td key={i} className="p-2 text-center border border-border">
-                  {v ? v.toFixed(1) : "—"}
+                  {v ? v.toFixed(1) : ""}
                 </td>
               ))}
               <td className="border border-border" colSpan={2} />
