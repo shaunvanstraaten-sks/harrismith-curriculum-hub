@@ -17,6 +17,7 @@ const en = {
     myAccount: "My account",
     history: "History",
     resources: "Resources",
+    headmaster: "Headmaster Dashboard",
   },
   auth: {
     signIn: "Sign in",
@@ -123,7 +124,8 @@ const en = {
     teacherChecked: "Teacher checked",
     learnersChecked: "Learners checked (name & grade)",
     otherComments: "Other comments",
-    postSample: "Post-moderation 10% per grade — learner names + grade + assessment mark + moderation mark",
+    postSample:
+      "Post-moderation 10% per grade — learner names + grade + assessment mark + moderation mark",
   },
   pmSections: {
     counts: "Learner numbers",
@@ -167,11 +169,13 @@ const en = {
     topics_balanced: "Have any topics been neglected or over-emphasized?",
     grid_completed: "Has the grid for cognitive levels and marks been completed?",
     grid_weightings: "Are the weightings on the grid correct?",
-    reasonable_pass: "Does the assessment item allow for the average learner to have a reasonable chance of passing?",
+    reasonable_pass:
+      "Does the assessment item allow for the average learner to have a reasonable chance of passing?",
     cover_form_topic: "Is the form of assessment and topic included on the cover page?",
     cover_time: "Is the period/time allowed indicated on the cover page?",
     cover_marks: "Are the total number of marks indicated on the cover page?",
-    cover_due_date: "Is the due date for submission clearly indicated? (applicable to projects and assignments)",
+    cover_due_date:
+      "Is the due date for submission clearly indicated? (applicable to projects and assignments)",
     cover_instructions: "Are the instructions on the cover page clear to the learner?",
     q_numbering: "Is the numbering of the questions correct?",
     q_instructions_included: "Are instructions to learners included at the beginning of the task?",
@@ -253,6 +257,28 @@ const en = {
     head_of_subject: "Head of Subject",
     teacher: "Teacher",
   },
+  headmaster: {
+    title: "Headmaster Management Tracker",
+    subtitle: "School-wide overview for the Principal",
+    allGrades: "All Grades",
+    attentionRequired: "Attention Required",
+    attentionRequiredHint: "Book Control below {{pct}}%",
+    deadlinesMissed: "Deadlines Missed",
+    deadlinesMissedHint: "Past due, not yet submitted",
+    byType: "By type",
+    belowThreshold: "Below {{pct}}%",
+    notSubmitted: "Not submitted",
+    responsible: "Responsible",
+    noRecords: "Nothing to show here.",
+    backToOverview: "Back",
+    deadlinesPanelTitle: "Term Deadlines",
+    deadlinesPanelDesc:
+      "Set the submission due date for each moderation type, for the selected year and term.",
+    dueDate: "Due date",
+    noDeadlineSet: "Not set",
+    deadlineSaved: "Deadline saved.",
+    year: "Year",
+  },
   analysis: {
     outOf: "Out of",
     studentName: "Student Name",
@@ -317,6 +343,7 @@ const af: typeof en = {
     myAccount: "My rekening",
     history: "Geskiedenis",
     resources: "Hulpbronne",
+    headmaster: "Skoolhoof Paneelbord",
   },
   auth: {
     signIn: "Teken in",
@@ -423,7 +450,8 @@ const af: typeof en = {
     teacherChecked: "Onderwyser gekontroleer",
     learnersChecked: "Leerders wie se boeke gekontroleer is (naam & graad)",
     otherComments: "Enige ander opmerkings",
-    postSample: "Post-moderering 10% per graad — name van leerders + graad + assesseringspunt + modereringspunt",
+    postSample:
+      "Post-moderering 10% per graad — name van leerders + graad + assesseringspunt + modereringspunt",
   },
   pmSections: {
     counts: "Leerdergetalle",
@@ -467,17 +495,20 @@ const af: typeof en = {
     topics_balanced: "Is enige onderwerpe afgeskeep of oorbeklemtoon?",
     grid_completed: "Is die rooster vir kognitiewe vlakke en punte voltooi?",
     grid_weightings: "Is die wegings op die rooster korrek?",
-    reasonable_pass: "Laat die assesseringsitem die gemiddelde leerder toe om 'n redelike kans te hê om te slaag?",
+    reasonable_pass:
+      "Laat die assesseringsitem die gemiddelde leerder toe om 'n redelike kans te hê om te slaag?",
     cover_form_topic: "Is die vorm van assessering en die onderwerp op die dekblad ingesluit?",
     cover_time: "Word die tydsduur/tyd toegelaat op die dekblad aangedui?",
     cover_marks: "Word die totale aantal punte op die dekblad aangedui?",
-    cover_due_date: "Word die sperdatum vir inhandiging duidelik aangedui? (van toepassing op projekte en take)",
+    cover_due_date:
+      "Word die sperdatum vir inhandiging duidelik aangedui? (van toepassing op projekte en take)",
     cover_instructions: "Is die instruksies op die dekblad duidelik vir die leerder?",
     q_numbering: "Is die nommering van die vrae korrek?",
     q_instructions_included: "Word instruksies aan leerders aan die begin van die taak ingesluit?",
     q_instructions_clear: "Is alle instruksies duidelik?",
     q_no_ambiguity: "Is alle vrae sonder dubbelsinnigheid geformuleer?",
-    q_visuals_clear: "Is alle diagramme, grafieke, prente en tabelle duidelik en gebruikersvriendelik?",
+    q_visuals_clear:
+      "Is alle diagramme, grafieke, prente en tabelle duidelik en gebruikersvriendelik?",
     q_variety: "Is daar 'n verskeidenheid vraagtipes?",
     q_mark_allocation: "Is daar 'n presiese aanduiding van die puntetoekenning?",
     q_marks_total: "Tel die punte op tot die aangeduide totaal?",
@@ -553,6 +584,28 @@ const af: typeof en = {
     head_of_subject: "Vakhoof",
     teacher: "Onderwyser",
   },
+  headmaster: {
+    title: "Skoolhoof Bestuurspaneel",
+    subtitle: "Skoolwye oorsig vir die Prinsipaal",
+    allGrades: "Alle Grade",
+    attentionRequired: "Aandag Nodig",
+    attentionRequiredHint: "Boek Kontrole onder {{pct}}%",
+    deadlinesMissed: "Sperdatums Verstryk",
+    deadlinesMissedHint: "Verby die sperdatum, nog nie ingedien nie",
+    byType: "Volgens tipe",
+    belowThreshold: "Onder {{pct}}%",
+    notSubmitted: "Nie ingedien nie",
+    responsible: "Verantwoordelik",
+    noRecords: "Niks om hier te wys nie.",
+    backToOverview: "Terug",
+    deadlinesPanelTitle: "Kwartaallikse Sperdatums",
+    deadlinesPanelDesc:
+      "Stel die inhandigingsdatum vir elke moderasietipe, vir die gekose jaar en kwartaal.",
+    dueDate: "Sperdatum",
+    noDeadlineSet: "Nie gestel nie",
+    deadlineSaved: "Sperdatum gestoor.",
+    year: "Jaar",
+  },
   analysis: {
     outOf: "Uit van",
     studentName: "Leerder se Naam",
@@ -601,8 +654,7 @@ const af: typeof en = {
   },
 };
 
-const stored =
-  typeof window !== "undefined" ? window.localStorage.getItem("hps.lang") : null;
+const stored = typeof window !== "undefined" ? window.localStorage.getItem("hps.lang") : null;
 
 if (!i18n.isInitialized) {
   void i18n.use(initReactI18next).init({

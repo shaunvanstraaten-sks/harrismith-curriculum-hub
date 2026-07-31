@@ -91,6 +91,47 @@ export type Database = {
         }
         Relationships: []
       }
+      moderation_deadlines: {
+        Row: {
+          academic_year: number
+          created_at: string
+          created_by: string
+          due_date: string
+          id: string
+          moderation_type: Database["public"]["Enums"]["moderation_type"]
+          quarter: number
+          updated_at: string
+        }
+        Insert: {
+          academic_year: number
+          created_at?: string
+          created_by: string
+          due_date: string
+          id?: string
+          moderation_type: Database["public"]["Enums"]["moderation_type"]
+          quarter: number
+          updated_at?: string
+        }
+        Update: {
+          academic_year?: number
+          created_at?: string
+          created_by?: string
+          due_date?: string
+          id?: string
+          moderation_type?: Database["public"]["Enums"]["moderation_type"]
+          quarter?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_deadlines_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       moderation_scores: {
         Row: {
           comment: string | null

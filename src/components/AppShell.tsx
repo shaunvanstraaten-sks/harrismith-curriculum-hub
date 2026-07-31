@@ -4,7 +4,16 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, hasAnyRole, type AppRole } from "@/hooks/use-auth";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { LogOut, LayoutDashboard, ClipboardCheck, FileText, Users, History, Library } from "lucide-react";
+import {
+  LogOut,
+  LayoutDashboard,
+  ClipboardCheck,
+  FileText,
+  Users,
+  History,
+  Library,
+  Gauge,
+} from "lucide-react";
 
 interface NavItem {
   to: string;
@@ -30,6 +39,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/history", labelKey: "nav.history", icon: <History size={18} /> },
     { to: "/reports", labelKey: "nav.reports", icon: <FileText size={18} /> },
     { to: "/resources", labelKey: "nav.resources", icon: <Library size={18} /> },
+    {
+      to: "/headmaster",
+      labelKey: "nav.headmaster",
+      icon: <Gauge size={18} />,
+      roles: ["principal"],
+    },
     {
       to: "/admin/users",
       labelKey: "nav.users",
@@ -66,9 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <div className="hidden sm:block text-sm text-white/80">
-              {fullName || user?.email}
-            </div>
+            <div className="hidden sm:block text-sm text-white/80">{fullName || user?.email}</div>
             <button
               onClick={signOut}
               className="inline-flex items-center gap-1.5 rounded-md bg-white/10 hover:bg-white/20 px-3 py-1.5 text-sm"
