@@ -40,9 +40,13 @@ function DashboardPage() {
   // than a school-wide profiles count.
   const teacherCount = new Set(submitted.map((s) => s.teacher_id)).size;
 
-  // Pre-Moderation is a checklist with no meaningful percentage, so it must not
-  // drag the averages around. Only scored types count towards these figures.
-  const scored = submitted.filter((s) => s.moderation_type !== "pre_moderation");
+  // Book Control is currently the only type with a meaningful percentage that
+  // should count towards these figures: Pre-Moderation has no score at all,
+  // Post-Moderation/Analysis of Results/Subject Improvement Plan aren't
+  // comparable "moderation quality" scores in the same sense (and Subject
+  // Improvement Plan's percentage is always 0, which would wrongly drag the
+  // average down and inflate the below-85% count).
+  const scored = submitted.filter((s) => s.moderation_type === "book_control");
   const avg = scored.length > 0 ? scored.reduce((a, b) => a + Number(b.percentage), 0) / scored.length : 0;
   const below85 = scored.filter((s) => Number(s.percentage) < 85).length;
 

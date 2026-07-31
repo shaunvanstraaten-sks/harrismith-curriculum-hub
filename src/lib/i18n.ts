@@ -64,7 +64,7 @@ const en = {
     outstanding: "Outstanding actions",
     latest: "Latest moderation",
     below85: "Below 85%",
-    scoredOnly: "Scored moderations only",
+    scoredOnly: "Scored Book Control only",
     teachersHint: "With moderations in your scope",
   },
   teachers: {
@@ -344,7 +344,7 @@ const af: typeof en = {
     outstanding: "Uitstaande take",
     latest: "Jongste moderering",
     below85: "Onder 85%",
-    scoredOnly: "Slegs gepunte modererings",
+    scoredOnly: "Slegs gepunte Boek Kontrole",
     teachersHint: "Met modererings binne jou bereik",
   },
   teachers: {
