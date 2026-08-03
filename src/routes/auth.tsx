@@ -79,17 +79,29 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen brand-gradient flex flex-col">
-      <header className="max-w-5xl mx-auto w-full px-6 py-5 flex items-center justify-between text-white">
+    <div className="relative min-h-screen flex flex-col overflow-hidden">
+      {/* Campus photo backdrop */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/hps-campus.png')" }}
+        aria-hidden="true"
+      />
+      {/* Navy scrim, echoing the brand gradient, for text/card legibility over the photo */}
+      <div
+        className="absolute inset-0 bg-gradient-to-b from-brand-navy/90 via-brand-navy/70 to-brand-navy/90"
+        aria-hidden="true"
+      />
+
+      <header className="relative z-10 max-w-5xl mx-auto w-full px-6 py-5 flex items-center justify-between text-white">
         <Link to="/" className="flex items-center gap-3">
           <img src="/hps-logo.jpg" alt="crest" className="h-10 w-10 rounded bg-white p-1" />
-          <span className="font-semibold">{t("app.name")}</span>
+          <span className="font-semibold drop-shadow">{t("app.name")}</span>
         </Link>
         <LanguageSwitcher />
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-4 pb-12">
-        <div className="w-full max-w-md card-elevated p-8">
+      <main className="relative z-10 flex-1 flex items-center justify-center px-4 pb-12">
+        <div className="w-full max-w-md card-elevated p-8 shadow-2xl">
           <h1 className="text-2xl font-bold text-foreground">
             {mode === "signin"
               ? t("auth.signInTitle")
